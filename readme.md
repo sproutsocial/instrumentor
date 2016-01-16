@@ -1,7 +1,7 @@
-Guice Island Metrics
+Instrumentor
 ====================
 
-Some handy utilities for use with [Metrics](https://dropwizard.github.io/metrics/3.1.0/)
+Some handy instrumentation utilities for use with [Metrics](https://dropwizard.github.io/metrics/3.1.0/)
 
 
 Instrumenting Methods 

@@ -1,4 +1,4 @@
-package com.sproutsocial.metrics.timing;
+package com.sproutsocial.metrics;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -12,6 +12,7 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-public @interface MyTimer {
+public @interface Instrumented {
     String name() default "";
+    double errorThreshold() default -1;
 }

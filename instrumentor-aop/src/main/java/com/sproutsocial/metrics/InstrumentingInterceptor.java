@@ -1,12 +1,14 @@
 package com.sproutsocial.metrics;
 
-import static com.sproutsocial.metrics.Instrumentor.errorGaugesExist;
-import static com.sproutsocial.metrics.Instrumentor.healthCheckExists;
-import static com.sproutsocial.metrics.Instrumentor.registerErrorGauges;
-import static com.sproutsocial.metrics.Instrumentor.registerHealthCheck;
+import static com.sproutsocial.metrics.Instrumentation.errorGaugesExist;
+import static com.sproutsocial.metrics.Instrumentation.registerErrorGauges;
+import static com.sproutsocial.metrics.Instrumentation.registerHealthCheck;
+import static com.sproutsocial.metrics.Instrumentation.shouldRegisterHealthCheck;
+import static com.sproutsocial.metrics.Names.name;
 
 
 import java.lang.reflect.Method;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import org.aopalliance.intercept.MethodInterceptor;
@@ -25,17 +27,17 @@ import com.google.inject.Inject;
  *
  * @author horthy
  */
-public class InstrumentedMethodInterceptor implements MethodInterceptor {
+public class InstrumentingInterceptor implements MethodInterceptor {
     
 
     private final MetricRegistry metricRegistry;
-    private final HealthCheckRegistry healthCheckRegistry;
+    private final Optional<HealthCheckRegistry> healthCheckRegistry;
     private final Predicate<Throwable> filter;
 
     @Inject
-    public InstrumentedMethodInterceptor(
+    public InstrumentingInterceptor(
             MetricRegistry metricRegistry,
-            HealthCheckRegistry healthCheckRegistry,
+            Optional<HealthCheckRegistry> healthCheckRegistry,
             Predicate<Throwable> filter
     ) {
         this.metricRegistry = metricRegistry;
@@ -59,12 +61,12 @@ public class InstrumentedMethodInterceptor implements MethodInterceptor {
             registerErrorGauges(metricRegistry, name, errorMeter, timer);
         }
 
-        if (threshold > 0 && !healthCheckExists(healthCheckRegistry, name)) {
-            registerHealthCheck(healthCheckRegistry, name, threshold, errorMeter, timer);
+        if (shouldRegisterHealthCheck(healthCheckRegistry, name, threshold)) {
+            registerHealthCheck(healthCheckRegistry.get(), name, threshold, errorMeter, timer);
         }
 
         inFlight.inc();
-        try (Timer.Context ctx = timer.time()){
+        try (@SuppressWarnings("unused") Timer.Context ctx = timer.time()){
             return methodInvocation.proceed();
         } catch (Throwable e) {
             if (filter.test(e)) {
@@ -78,16 +80,16 @@ public class InstrumentedMethodInterceptor implements MethodInterceptor {
 
     private String getName(Method method) {
         final String name = method
-                .getDeclaredAnnotation(InstrumentedMethod.class)
+                .getDeclaredAnnotation(Instrumented.class)
                 .name();
 
-        return Strings.isNullOrEmpty(name) ?
-                Names.forMethod(method) :
-                name;
+        return Strings.isNullOrEmpty(name) ? name(method) : name;
     }
 
     private double getThreshold(Method method) {
-        return method.getDeclaredAnnotation(InstrumentedMethod.class)
+        return method.getDeclaredAnnotation(Instrumented.class)
                      .errorThreshold();
     }
+
+
 }

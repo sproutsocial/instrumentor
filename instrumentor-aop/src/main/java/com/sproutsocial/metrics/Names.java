@@ -13,7 +13,7 @@ import com.codahale.metrics.MetricRegistry;
  */
 public final class Names {
     private Names(){}
-    public static String forMethod(Method method) {
+    public static String name(Method method) {
         final Class klass = method.getDeclaringClass();
         return MetricRegistry.name(klass, method.getName());
     }
