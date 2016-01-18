@@ -18,11 +18,14 @@ import com.sproutsocial.metrics.healthchecks.HealthChecks;
  * @author horthy
  */
 /* package */ final class Instrumentation {
+
+    public static final double NO_THRESHOLD_DEFINED = -1d;
+
     private Instrumentation() {}
 
-    static boolean shouldRegisterHealthCheck(Optional<HealthCheckRegistry> healthCheckRegistry, String name, double threshold) {
+    static <T> boolean shouldRegisterHealthCheck(Optional<HealthCheckRegistry> healthCheckRegistry, String name, Optional<T> ceiling) {
         return healthCheckRegistry.isPresent() &&
-                threshold > 0 &&
+                ceiling.isPresent() &&
                 !healthCheckExists(healthCheckRegistry.get(), name);
     }
 
@@ -36,12 +39,12 @@ import com.sproutsocial.metrics.healthchecks.HealthChecks;
                 .containsKey(MetricRegistry.name(name, "errors", "mean_pct"));
     }
 
-    static void registerHealthCheck(HealthCheckRegistry healthCheckRegistry, String name, double threshold, Metered errorMeter, Metered timer) {
+    static void registerHealthCheck(HealthCheckRegistry healthCheckRegistry, String name, Optional<Double> ceiling, Metered errorMeter, Metered timer) {
         final Gauge<Double> errorRate = Gauges.ratioOf(errorMeter, timer, Metered::getFifteenMinuteRate);
 
         final HealthCheck healthCheck = HealthChecks.forDoubleGauge(
                 errorRate,
-                threshold
+                ceiling
         );
         healthCheckRegistry.register(name, healthCheck);
     }

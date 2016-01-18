@@ -71,14 +71,14 @@ public class Instrumentor {
     public <T> Callable<T> instrumenting(
             Callable<T> callable,
             String name,
-            double threshold
+            Optional<Double> errorThreshold
     ) {
 
         final Meter errorMeter = metricRegistry.meter(name + ".errors");
         final Timer timer = metricRegistry.timer(name);
         final Counter inFlight = metricRegistry.counter(name + ".inFlight");
 
-        registerMetricsAndHealthChecks(timer, errorMeter, name, threshold);
+        registerMetricsAndHealthChecks(timer, errorMeter, name, errorThreshold);
 
         return () -> {
             inFlight.inc();
@@ -98,14 +98,14 @@ public class Instrumentor {
     public CheckedRunnable instrumenting(
             CheckedRunnable runnable,
             String name,
-            double threshold
+            Optional<Double> errorThreshold
     ) {
 
         final Meter errorMeter = metricRegistry.meter(name + ".errors");
         final Timer timer = metricRegistry.timer(name);
         final Counter inFlight = metricRegistry.counter(name + ".inFlight");
 
-        registerMetricsAndHealthChecks(timer, errorMeter, name, threshold);
+        registerMetricsAndHealthChecks(timer, errorMeter, name, errorThreshold);
 
         return () -> {
             inFlight.inc();
@@ -125,14 +125,14 @@ public class Instrumentor {
     public Runnable instrumenting(
             Runnable runnable,
             String name,
-            double threshold
+            Optional<Double> errorThreshold
     ) {
 
         final Meter errorMeter = metricRegistry.meter(name + ".errors");
         final Timer timer = metricRegistry.timer(name);
         final Counter inFlight = metricRegistry.counter(name + ".inFlight");
 
-        registerMetricsAndHealthChecks(timer, errorMeter, name, threshold);
+        registerMetricsAndHealthChecks(timer, errorMeter, name, errorThreshold);
 
         return () -> {
             inFlight.inc();
@@ -149,39 +149,39 @@ public class Instrumentor {
         };
     }
 
-    private void registerMetricsAndHealthChecks(Timer timer, Meter errorMeter, String name, double threshold) {
+    private void registerMetricsAndHealthChecks(Timer timer, Meter errorMeter, String name, Optional<Double> errorThreshold) {
         if (!errorGaugesExist(metricRegistry, name)) {
             registerErrorGauges(metricRegistry, name, errorMeter, timer);
         }
 
-        if (shouldRegisterHealthCheck(healthCheckRegistry, name, threshold)) {
-            registerHealthCheck(healthCheckRegistry.get(), name, threshold, errorMeter, timer);
+        if (shouldRegisterHealthCheck(healthCheckRegistry, name, errorThreshold)) {
+            registerHealthCheck(healthCheckRegistry.get(), name, errorThreshold, errorMeter, timer);
         }
     }
 
     public void run(
             Runnable runnable,
             String name,
-            double threshold
+            Optional<Double> errorThreshold
     ) {
-        instrumenting(runnable, name, threshold).run();
+        instrumenting(runnable, name, errorThreshold).run();
     }
 
     public void runChecked(
             CheckedRunnable runnable,
             String name,
-            double threshold
+            Optional<Double> errorThreshold
     ) throws Exception {
-        instrumenting(runnable, name, threshold).run();
+        instrumenting(runnable, name, errorThreshold).run();
     }
 
     public <T> T call(
             Callable<T> callable,
             String name,
-            double threshold
+            Optional<Double> errorThreshold
     ) {
         try {
-            return instrumenting(callable, name, threshold).call();
+            return instrumenting(callable, name, errorThreshold).call();
         } catch (Exception e) {
             throw Throwables.propagate(e);
         }
@@ -190,37 +190,37 @@ public class Instrumentor {
     public <T> T callChecked(
             Callable<T> callable,
             String name,
-            double threshold
+            Optional<Double> errorThreshold
     ) throws Exception {
-        return instrumenting(callable, name, threshold).call();
+        return instrumenting(callable, name, errorThreshold).call();
     }
 
     public void run(
             Runnable runnable,
             String name
     ) {
-        run(runnable, name, -1d);
+        run(runnable, name, Optional.empty());
     }
 
     public void runChecked(
             CheckedRunnable runnable,
             String name
     ) throws Exception {
-        runChecked(runnable, name, -1d);
+        runChecked(runnable, name, Optional.empty());
     }
 
     public <T> T call(
             Callable<T> callable,
             String name
     ) {
-        return call(callable, name, -1d);
+        return call(callable, name, Optional.empty());
     }
 
     public <T> T callChecked(
             Callable<T> callable,
             String name
     ) throws Exception {
-        return callChecked(callable, name, -1d);
+        return callChecked(callable, name, Optional.empty());
     }
 
 }

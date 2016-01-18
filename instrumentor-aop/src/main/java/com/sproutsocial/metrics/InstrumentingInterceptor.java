@@ -49,7 +49,7 @@ public class InstrumentingInterceptor implements MethodInterceptor {
     @Override
     public Object invoke(MethodInvocation methodInvocation) throws Throwable {
         final Method method = methodInvocation.getMethod();
-        final double threshold = getThreshold(method);
+        final Optional<Double> threshold = getErrorThreshold(method);
         final String name = getName(method);
 
 
@@ -86,9 +86,12 @@ public class InstrumentingInterceptor implements MethodInterceptor {
         return Strings.isNullOrEmpty(name) ? name(method) : name;
     }
 
-    private double getThreshold(Method method) {
-        return method.getDeclaredAnnotation(Instrumented.class)
-                     .errorThreshold();
+    private Optional<Double> getErrorThreshold(Method method) {
+        final double threshold = method.getDeclaredAnnotation(Instrumented.class)
+                .errorThreshold();
+        return threshold == Instrumentation.NO_THRESHOLD_DEFINED ?
+                Optional.empty() :
+                Optional.of(threshold);
     }
 
 
