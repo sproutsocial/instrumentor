@@ -68,7 +68,7 @@ public class Instrumentor {
         return metricRegistry;
     }
 
-    public <T> Callable<T> instrumenting(
+    private <T> Callable<T> instrumenting(
             Callable<T> callable,
             String name,
             Optional<Double> errorThreshold
@@ -95,7 +95,7 @@ public class Instrumentor {
         };
     }
 
-    public CheckedRunnable instrumenting(
+    private CheckedRunnable instrumenting(
             CheckedRunnable runnable,
             String name,
             Optional<Double> errorThreshold
@@ -122,7 +122,7 @@ public class Instrumentor {
         };
     }
 
-    public Runnable instrumenting(
+    private Runnable instrumenting(
             Runnable runnable,
             String name,
             Optional<Double> errorThreshold
@@ -159,7 +159,32 @@ public class Instrumentor {
         }
     }
 
-    public void run(
+
+    public <T> Callable<T> instrumenting(
+            Callable<T> callable,
+            String name,
+            double errorThreshold
+    ) {
+        return instrumenting(callable, name, Optional.of(errorThreshold));
+    }
+
+    public CheckedRunnable instrumenting(
+            CheckedRunnable runnable,
+            String name,
+            double errorThreshold
+    ) {
+        return instrumenting(runnable, name, Optional.of(errorThreshold));
+    }
+
+    public Runnable instrumenting(
+            Runnable runnable,
+            String name,
+            double errorThreshold
+    ) {
+        return instrumenting(runnable, name, Optional.of(errorThreshold));
+    }
+
+    private void run(
             Runnable runnable,
             String name,
             Optional<Double> errorThreshold
@@ -167,7 +192,7 @@ public class Instrumentor {
         instrumenting(runnable, name, errorThreshold).run();
     }
 
-    public void runChecked(
+    private void runChecked(
             CheckedRunnable runnable,
             String name,
             Optional<Double> errorThreshold
@@ -175,7 +200,7 @@ public class Instrumentor {
         instrumenting(runnable, name, errorThreshold).run();
     }
 
-    public <T> T call(
+    private <T> T call(
             Callable<T> callable,
             String name,
             Optional<Double> errorThreshold
@@ -187,7 +212,7 @@ public class Instrumentor {
         }
     }
 
-    public <T> T callChecked(
+    private <T> T callChecked(
             Callable<T> callable,
             String name,
             Optional<Double> errorThreshold
@@ -221,6 +246,39 @@ public class Instrumentor {
             String name
     ) throws Exception {
         return callChecked(callable, name, Optional.empty());
+    }
+
+
+    public void run(
+            Runnable runnable,
+            String name,
+            double errorThreshold
+    ) {
+        run(runnable, name, Optional.of(errorThreshold));
+    }
+
+    public void runChecked(
+            CheckedRunnable runnable,
+            String name,
+            double errorThreshold
+    ) throws Exception {
+        runChecked(runnable, name, Optional.of(errorThreshold));
+    }
+
+    public <T> T call(
+            Callable<T> callable,
+            String name,
+            double errorThreshold
+    ) {
+        return call(callable, name, Optional.of(errorThreshold));
+    }
+
+    public <T> T callChecked(
+            Callable<T> callable,
+            String name,
+            double errorThreshold
+    ) throws Exception {
+        return callChecked(callable, name, Optional.of(errorThreshold));
     }
 
 }

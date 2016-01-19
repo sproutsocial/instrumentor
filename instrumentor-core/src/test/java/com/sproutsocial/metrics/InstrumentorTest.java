@@ -5,7 +5,6 @@ import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 
-import java.util.Optional;
 import java.util.concurrent.Callable;
 
 import org.junit.Before;
@@ -54,7 +53,7 @@ public class InstrumentorTest {
 
 
         try {
-            instrumentor.instrumenting(runnable, NAME, Optional.of(0.1)).run();
+            instrumentor.instrumenting(runnable, NAME, 0.1).run();
         } catch (RuntimeException ignored) {}
 
         assertTrue(healthCheckRegistry.getNames().contains(NAME));
@@ -79,7 +78,7 @@ public class InstrumentorTest {
 
 
         try {
-            instrumentor.runChecked(runnable, NAME, Optional.of(0.1));
+            instrumentor.runChecked(runnable, NAME, 0.1);
         } catch (Exception ignored) {}
 
         assertTrue(healthCheckRegistry.getNames().contains(NAME));
@@ -102,7 +101,7 @@ public class InstrumentorTest {
 
 
         try {
-            instrumentor.call(callable, NAME, Optional.of(0.1));
+            instrumentor.call(callable, NAME, 0.1);
         } catch (Exception ignored) {}
 
         assertTrue(healthCheckRegistry.getNames().contains(NAME));
