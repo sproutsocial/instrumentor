@@ -68,17 +68,17 @@ public class Instrumentor {
         return metricRegistry;
     }
 
-    public <T> Callable<T> instrumenting(
+    private <T> Callable<T> instrumenting(
             Callable<T> callable,
             String name,
-            double threshold
+            Optional<Double> errorThreshold
     ) {
 
         final Meter errorMeter = metricRegistry.meter(name + ".errors");
         final Timer timer = metricRegistry.timer(name);
         final Counter inFlight = metricRegistry.counter(name + ".inFlight");
 
-        registerMetricsAndHealthChecks(timer, errorMeter, name, threshold);
+        registerMetricsAndHealthChecks(timer, errorMeter, name, errorThreshold);
 
         return () -> {
             inFlight.inc();
@@ -95,17 +95,17 @@ public class Instrumentor {
         };
     }
 
-    public CheckedRunnable instrumenting(
+    private CheckedRunnable instrumenting(
             CheckedRunnable runnable,
             String name,
-            double threshold
+            Optional<Double> errorThreshold
     ) {
 
         final Meter errorMeter = metricRegistry.meter(name + ".errors");
         final Timer timer = metricRegistry.timer(name);
         final Counter inFlight = metricRegistry.counter(name + ".inFlight");
 
-        registerMetricsAndHealthChecks(timer, errorMeter, name, threshold);
+        registerMetricsAndHealthChecks(timer, errorMeter, name, errorThreshold);
 
         return () -> {
             inFlight.inc();
@@ -120,107 +120,165 @@ public class Instrumentor {
                 inFlight.dec();
             }
         };
+    }
+
+    private Runnable instrumenting(
+            Runnable runnable,
+            String name,
+            Optional<Double> errorThreshold
+    ) {
+
+        final Meter errorMeter = metricRegistry.meter(name + ".errors");
+        final Timer timer = metricRegistry.timer(name);
+        final Counter inFlight = metricRegistry.counter(name + ".inFlight");
+
+        registerMetricsAndHealthChecks(timer, errorMeter, name, errorThreshold);
+
+        return () -> {
+            inFlight.inc();
+            try (@SuppressWarnings("unused") Timer.Context ctx = timer.time()){
+                runnable.run();
+            } catch (Exception e) {
+                if (filter.test(e)) {
+                    errorMeter.mark();
+                }
+                throw e;
+            } finally {
+                inFlight.dec();
+            }
+        };
+    }
+
+    private void registerMetricsAndHealthChecks(Timer timer, Meter errorMeter, String name, Optional<Double> errorThreshold) {
+        if (!errorGaugesExist(metricRegistry, name)) {
+            registerErrorGauges(metricRegistry, name, errorMeter, timer);
+        }
+
+        if (shouldRegisterHealthCheck(healthCheckRegistry, name, errorThreshold)) {
+            registerHealthCheck(healthCheckRegistry.get(), name, errorThreshold, errorMeter, timer);
+        }
+    }
+
+
+    public <T> Callable<T> instrumenting(
+            Callable<T> callable,
+            String name,
+            double errorThreshold
+    ) {
+        return instrumenting(callable, name, Optional.of(errorThreshold));
+    }
+
+    public CheckedRunnable instrumenting(
+            CheckedRunnable runnable,
+            String name,
+            double errorThreshold
+    ) {
+        return instrumenting(runnable, name, Optional.of(errorThreshold));
     }
 
     public Runnable instrumenting(
             Runnable runnable,
             String name,
-            double threshold
+            double errorThreshold
     ) {
-
-        final Meter errorMeter = metricRegistry.meter(name + ".errors");
-        final Timer timer = metricRegistry.timer(name);
-        final Counter inFlight = metricRegistry.counter(name + ".inFlight");
-
-        registerMetricsAndHealthChecks(timer, errorMeter, name, threshold);
-
-        return () -> {
-            inFlight.inc();
-            try (@SuppressWarnings("unused") Timer.Context ctx = timer.time()){
-                runnable.run();
-            } catch (Exception e) {
-                if (filter.test(e)) {
-                    errorMeter.mark();
-                }
-                throw e;
-            } finally {
-                inFlight.dec();
-            }
-        };
+        return instrumenting(runnable, name, Optional.of(errorThreshold));
     }
 
-    private void registerMetricsAndHealthChecks(Timer timer, Meter errorMeter, String name, double threshold) {
-        if (!errorGaugesExist(metricRegistry, name)) {
-            registerErrorGauges(metricRegistry, name, errorMeter, timer);
-        }
-
-        if (shouldRegisterHealthCheck(healthCheckRegistry, name, threshold)) {
-            registerHealthCheck(healthCheckRegistry.get(), name, threshold, errorMeter, timer);
-        }
-    }
-
-    public void run(
+    private void run(
             Runnable runnable,
             String name,
-            double threshold
+            Optional<Double> errorThreshold
     ) {
-        instrumenting(runnable, name, threshold).run();
+        instrumenting(runnable, name, errorThreshold).run();
     }
 
-    public void runChecked(
+    private void runChecked(
             CheckedRunnable runnable,
             String name,
-            double threshold
+            Optional<Double> errorThreshold
     ) throws Exception {
-        instrumenting(runnable, name, threshold).run();
+        instrumenting(runnable, name, errorThreshold).run();
     }
 
-    public <T> T call(
+    private <T> T call(
             Callable<T> callable,
             String name,
-            double threshold
+            Optional<Double> errorThreshold
     ) {
         try {
-            return instrumenting(callable, name, threshold).call();
+            return instrumenting(callable, name, errorThreshold).call();
         } catch (Exception e) {
             throw Throwables.propagate(e);
         }
     }
 
-    public <T> T callChecked(
+    private <T> T callChecked(
             Callable<T> callable,
             String name,
-            double threshold
+            Optional<Double> errorThreshold
     ) throws Exception {
-        return instrumenting(callable, name, threshold).call();
+        return instrumenting(callable, name, errorThreshold).call();
     }
 
     public void run(
             Runnable runnable,
             String name
     ) {
-        run(runnable, name, -1d);
+        run(runnable, name, Optional.empty());
     }
 
     public void runChecked(
             CheckedRunnable runnable,
             String name
     ) throws Exception {
-        runChecked(runnable, name, -1d);
+        runChecked(runnable, name, Optional.empty());
     }
 
     public <T> T call(
             Callable<T> callable,
             String name
     ) {
-        return call(callable, name, -1d);
+        return call(callable, name, Optional.empty());
     }
 
     public <T> T callChecked(
             Callable<T> callable,
             String name
     ) throws Exception {
-        return callChecked(callable, name, -1d);
+        return callChecked(callable, name, Optional.empty());
+    }
+
+
+    public void run(
+            Runnable runnable,
+            String name,
+            double errorThreshold
+    ) {
+        run(runnable, name, Optional.of(errorThreshold));
+    }
+
+    public void runChecked(
+            CheckedRunnable runnable,
+            String name,
+            double errorThreshold
+    ) throws Exception {
+        runChecked(runnable, name, Optional.of(errorThreshold));
+    }
+
+    public <T> T call(
+            Callable<T> callable,
+            String name,
+            double errorThreshold
+    ) {
+        return call(callable, name, Optional.of(errorThreshold));
+    }
+
+    public <T> T callChecked(
+            Callable<T> callable,
+            String name,
+            double errorThreshold
+    ) throws Exception {
+        return callChecked(callable, name, Optional.of(errorThreshold));
     }
 
 }

@@ -1,5 +1,7 @@
 package com.sproutsocial.metrics.healthchecks;
 
+import java.util.Optional;
+
 import com.codahale.metrics.Gauge;
 import com.google.common.collect.ImmutableSet;
 
@@ -13,9 +15,9 @@ public final class HealthChecks {
     private HealthChecks(){}
     
     public static <T extends Comparable<T>> GaugeHealthCheck<T> forGauge(
-            Gauge<T> gauge, T threshold
+            Gauge<T> gauge, Optional<T> ceiling
     ) {
-        return new GaugeHealthCheck<>(gauge, threshold);
+        return new GaugeHealthCheck<>(gauge, ceiling);
     }
 
     /**
@@ -26,9 +28,9 @@ public final class HealthChecks {
      * we don't want to blow up if the call rate is 0
      */
     public static GaugeHealthCheck<Double> forDoubleGauge(
-            Gauge<Double> gauge, double threshold
+            Gauge<Double> gauge, Optional<Double> ceiling
     ) {
         return new GaugeHealthCheck<>(
-                gauge, threshold, ImmutableSet.of(Double.NaN));
+                gauge, ceiling, ImmutableSet.of(Double.NaN));
     }
 }

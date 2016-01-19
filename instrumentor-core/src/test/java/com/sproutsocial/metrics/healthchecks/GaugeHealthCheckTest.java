@@ -4,6 +4,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
+import java.util.Optional;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,16 +31,25 @@ public class GaugeHealthCheckTest {
     public void testHealthy() throws Exception {
         when(doubleGauge.getValue()).thenReturn(3d);
 
-        healthCheck = HealthChecks.forDoubleGauge(doubleGauge, 5d);
+        healthCheck = HealthChecks.forDoubleGauge(doubleGauge, Optional.of(5d));
+
+        assertTrue(healthCheck.check().isHealthy());
+    }
+
+    @Test
+    public void testHealthyWithoutCeiling() throws Exception {
+        when(doubleGauge.getValue()).thenReturn(3d);
+
+        healthCheck = HealthChecks.forDoubleGauge(doubleGauge, Optional.empty());
 
         assertTrue(healthCheck.check().isHealthy());
     }
     
     @Test
-    public void testUnhealthyAtThreshold() throws Exception {
+    public void testUnhealthyAtCeiling() throws Exception {
         when(doubleGauge.getValue()).thenReturn(5d);
 
-        healthCheck = HealthChecks.forDoubleGauge(doubleGauge, 5d);
+        healthCheck = HealthChecks.forDoubleGauge(doubleGauge, Optional.of(5d));
 
         assertFalse(healthCheck.check().isHealthy());
     }
@@ -48,7 +58,7 @@ public class GaugeHealthCheckTest {
     public void testUnhealthy() throws Exception {
         when(doubleGauge.getValue()).thenReturn(10d);
 
-        healthCheck = HealthChecks.forDoubleGauge(doubleGauge, 5d);
+        healthCheck = HealthChecks.forDoubleGauge(doubleGauge, Optional.of(5d));
 
         assertFalse(healthCheck.check().isHealthy());
     }
@@ -57,7 +67,7 @@ public class GaugeHealthCheckTest {
     public void testNaN() throws Exception {
         when(doubleGauge.getValue()).thenReturn(Double.NaN);
 
-        healthCheck = HealthChecks.forDoubleGauge(doubleGauge, 5d);
+        healthCheck = HealthChecks.forDoubleGauge(doubleGauge, Optional.of(5d));
 
         assertTrue(healthCheck.check().isHealthy());
     }
@@ -66,7 +76,7 @@ public class GaugeHealthCheckTest {
     public void testRegularGauge() throws Exception {
         when(stringGauge.getValue()).thenReturn("foobarbaz");
 
-        stringHealthCheck = HealthChecks.forGauge(stringGauge, "foobarbazzz");
+        stringHealthCheck = HealthChecks.forGauge(stringGauge, Optional.of("foobarbazzz"));
 
         assertTrue(stringHealthCheck.check().isHealthy());
     }
@@ -75,7 +85,7 @@ public class GaugeHealthCheckTest {
     public void testRegularGaugeUnhealthy() throws Exception {
         when(stringGauge.getValue()).thenReturn("foobarbaz");
 
-        stringHealthCheck = HealthChecks.forGauge(stringGauge, "abc");
+        stringHealthCheck = HealthChecks.forGauge(stringGauge, Optional.of("abc"));
 
         assertFalse(stringHealthCheck.check().isHealthy());
     }

@@ -5,7 +5,6 @@ import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 
-
 import java.util.concurrent.Callable;
 
 import org.junit.Before;

@@ -13,6 +13,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface Instrumented {
+
     String name() default "";
-    double errorThreshold() default -1;
+    double errorThreshold() default Instrumentation.NO_THRESHOLD_DEFINED;
+
+
 }
