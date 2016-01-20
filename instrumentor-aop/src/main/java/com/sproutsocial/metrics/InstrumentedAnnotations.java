@@ -48,9 +48,11 @@ public class InstrumentedAnnotations extends AbstractModule {
                 Matchers.any(),
                 Matchers.annotatedWith(Instrumented.class),
                 new InstrumentingInterceptor(
-                        metricRegistry,
-                        healthCheckRegistry,
-                        exceptionFilter
+                        new Instrumentor(
+                                metricRegistry,
+                                healthCheckRegistry,
+                                exceptionFilter
+                        )
                 )
         );
     }

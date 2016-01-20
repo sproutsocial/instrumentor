@@ -40,6 +40,33 @@ public class Instrumentor {
 
     }
 
+    public static class Builder {
+        private MetricRegistry metricRegistry = new MetricRegistry();
+        private HealthCheckRegistry healthCheckRegistry = null;
+        private Predicate<Throwable> filter = any -> true;
+
+        private Builder() {}
+
+        public Builder metricRegistry(MetricRegistry metricRegistry) {
+            this.metricRegistry = metricRegistry;
+            return this;
+        }
+
+        public Builder healthCheckRegistry(HealthCheckRegistry healthCheckRegistry) {
+            this.healthCheckRegistry = healthCheckRegistry;
+            return this;
+        }
+
+        public Builder exceptionFilter(Predicate<Throwable> filter) {
+            this.filter = filter;
+            return this;
+        }
+
+        public Instrumentor build() {
+            return new Instrumentor(metricRegistry, healthCheckRegistry, filter);
+        }
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -84,6 +111,29 @@ public class Instrumentor {
             try (@SuppressWarnings("unused") Timer.Context ctx = context.timer.time()){
                 return callable.call();
             } catch (Exception e) {
+                if (exceptionFilter.test(e)) {
+                    context.errorMeter.mark();
+                }
+                throw e;
+            } finally {
+                context.inFlight.dec();
+            }
+        };
+    }
+
+    private <T> ThrowableCallable<T> instrumenting(
+            ThrowableCallable<T> callable,
+            String name,
+            Optional<Double> errorThreshold
+    ) {
+
+        final Context context = createInstrumentationContext(name, errorThreshold);
+
+        return () -> {
+            context.inFlight.inc();
+            try (@SuppressWarnings("unused") Timer.Context ctx = context.timer.time()){
+                return callable.call();
+            } catch (Throwable e) {
                 if (exceptionFilter.test(e)) {
                     context.errorMeter.mark();
                 }
@@ -212,6 +262,15 @@ public class Instrumentor {
         return instrumenting(callable, name, errorThreshold).call();
     }
 
+
+    /* package */ <T> T callThrowably(
+            ThrowableCallable<T> callable,
+            String name,
+            Optional<Double> errorThreshold
+    ) throws Throwable {
+        return instrumenting(callable, name, errorThreshold).call();
+    }
+
     public void run(
             Runnable runnable,
             String name
@@ -238,6 +297,13 @@ public class Instrumentor {
             String name
     ) throws Exception {
         return callChecked(callable, name, Optional.empty());
+    }
+
+    public <T> T callThrowably(
+            ThrowableCallable<T> callable,
+            String name
+    ) throws Throwable {
+        return callThrowably(callable, name, Optional.empty());
     }
 
 
@@ -273,30 +339,12 @@ public class Instrumentor {
         return callChecked(callable, name, Optional.of(errorThreshold));
     }
 
-    public static class Builder {
-        private MetricRegistry metricRegistry = new MetricRegistry();
-        private HealthCheckRegistry healthCheckRegistry = null;
-        private Predicate<Throwable> filter = any -> true;
-
-        private Builder() {}
-
-        public Builder metricRegistry(MetricRegistry metricRegistry) {
-            this.metricRegistry = metricRegistry;
-            return this;
-        }
-
-        public Builder healthCheckRegistry(HealthCheckRegistry healthCheckRegistry) {
-            this.healthCheckRegistry = healthCheckRegistry;
-            return this;
-        }
-
-        public Builder exceptionFilter(Predicate<Throwable> filter) {
-            this.filter = filter;
-            return this;
-        }
-
-        public Instrumentor build() {
-            return new Instrumentor(metricRegistry, healthCheckRegistry, filter);
-        }
+    public <T> T callThrowably(
+            ThrowableCallable<T> callable,
+            String name,
+            double errorThreshold
+    ) throws Throwable {
+        return callThrowably(callable, name, Optional.of(errorThreshold));
     }
+
 }
