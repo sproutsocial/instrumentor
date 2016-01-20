@@ -299,7 +299,7 @@ public class Instrumentor {
         return callChecked(callable, name, Optional.empty());
     }
 
-    public <T> T callThrowably(
+    /* package */ <T> T callThrowably(
             ThrowableCallable<T> callable,
             String name
     ) throws Throwable {
@@ -339,7 +339,7 @@ public class Instrumentor {
         return callChecked(callable, name, Optional.of(errorThreshold));
     }
 
-    public <T> T callThrowably(
+    /* package */ <T> T callThrowably(
             ThrowableCallable<T> callable,
             String name,
             double errorThreshold
