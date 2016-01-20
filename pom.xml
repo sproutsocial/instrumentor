@@ -19,15 +19,17 @@
             <email>dexter.i.horthy@gmail.com</email>
             <timezone>America/Los_Angeles</timezone>
             <roles>
-                <role>committer</role>
+                <role>maintainer</role>
             </roles>
         </developer>
         <developer>
-            <!-- TODO double check with dave re: email, role, etc -->
             <name>David Huber</name>
+            <email>TODO@I'mDave.com</email>
             <timezone>America/Chicago</timezone>
+            <organization>Sprout Social, LLC</organization>
+            <organizationUrl>http://sproutsocial.com</organizationUrl>
             <roles>
-                <role>moral support</role>
+                <role>maintainer</role>
             </roles>
         </developer>
     </developers>
