@@ -90,7 +90,7 @@ You'll get stats to track the percentage of method calls are throwing exceptions
 
 #### HealthCheck
 
-If you pass an error threshold, you'll get a HealthCheck that will monitor 
+If you pass a `threshold` as the third argument, you'll get a HealthCheck that will monitor 
 the percent of errors, and notify when the error rate exceeds the threshold.
 
 Assuming the threshold given is `0.1` i.e. ten percent, and there were 

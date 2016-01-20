@@ -138,4 +138,27 @@ public class InstrumentorTest {
         inOrder.verify(errorMeter, times(1)).mark();
         inOrder.verify(counter, times(1)).dec();
     }
+
+    @Test
+    public void testCallThrowably() throws Exception {
+        when(metricRegistry.timer(NAME)).thenReturn(timer);
+        when(metricRegistry.meter(NAME + ".errors")).thenReturn(errorMeter);
+        when(metricRegistry.counter(NAME + ".inFlight")).thenReturn(counter);
+        when(timer.time()).thenReturn(context);
+        ThrowableCallable<Void> callable =  () -> { throw new Throwable();};
+
+
+        try {
+            instrumentor.callThrowably(callable, NAME, 0.1);
+        } catch (Throwable ignored) {}
+
+        assertTrue(healthCheckRegistry.getNames().contains(NAME));
+
+
+        final InOrder inOrder = inOrder(counter, errorMeter, context);
+        inOrder.verify(counter, times(1)).inc();
+        inOrder.verify(context, times(1)).close();
+        inOrder.verify(errorMeter, times(1)).mark();
+        inOrder.verify(counter, times(1)).dec();
+    }
 }

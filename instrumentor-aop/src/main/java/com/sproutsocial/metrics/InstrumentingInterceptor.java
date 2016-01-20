@@ -1,24 +1,14 @@
 package com.sproutsocial.metrics;
 
-import static com.sproutsocial.metrics.Instrumentation.errorGaugesExist;
-import static com.sproutsocial.metrics.Instrumentation.registerErrorGauges;
-import static com.sproutsocial.metrics.Instrumentation.registerHealthCheck;
-import static com.sproutsocial.metrics.Instrumentation.shouldRegisterHealthCheck;
 import static com.sproutsocial.metrics.Names.name;
 
 
 import java.lang.reflect.Method;
 import java.util.Optional;
-import java.util.function.Predicate;
 
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.Meter;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.Timer;
-import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 
@@ -30,19 +20,13 @@ import com.google.inject.Inject;
 public class InstrumentingInterceptor implements MethodInterceptor {
     
 
-    private final MetricRegistry metricRegistry;
-    private final HealthCheckRegistry healthCheckRegistry;
-    private final Predicate<Throwable> filter;
+    private final Instrumentor instrumentor;
 
     @Inject
     public InstrumentingInterceptor(
-            MetricRegistry metricRegistry,
-            HealthCheckRegistry healthCheckRegistry,
-            Predicate<Throwable> filter
+            Instrumentor instrumentor
     ) {
-        this.metricRegistry = metricRegistry;
-        this.healthCheckRegistry = healthCheckRegistry;
-        this.filter = filter;
+        this.instrumentor = instrumentor;
     }
 
 
@@ -52,30 +36,11 @@ public class InstrumentingInterceptor implements MethodInterceptor {
         final Optional<Double> threshold = getErrorThreshold(method);
         final String name = getName(method);
 
-
-        final Meter errorMeter = metricRegistry.meter(name + ".errors");
-        final Timer timer = metricRegistry.timer(name);
-        final Counter inFlight = metricRegistry.counter(name + ".inFlight");
-
-        if (!errorGaugesExist(metricRegistry, name)) {
-            registerErrorGauges(metricRegistry, name, errorMeter, timer);
-        }
-
-        if (shouldRegisterHealthCheck(healthCheckRegistry, name, threshold)) {
-            registerHealthCheck(healthCheckRegistry, name, threshold, errorMeter, timer);
-        }
-
-        inFlight.inc();
-        try (@SuppressWarnings("unused") Timer.Context ctx = timer.time()){
-            return methodInvocation.proceed();
-        } catch (Throwable e) {
-            if (filter.test(e)) {
-                errorMeter.mark();
-            }
-            throw e;
-        } finally {
-            inFlight.dec();
-        }
+        return instrumentor.callThrowably(
+                methodInvocation::proceed,
+                name,
+                threshold
+        );
     }
 
     private String getName(Method method) {
@@ -89,7 +54,7 @@ public class InstrumentingInterceptor implements MethodInterceptor {
     private Optional<Double> getErrorThreshold(Method method) {
         final double threshold = method.getDeclaredAnnotation(Instrumented.class)
                 .errorThreshold();
-        return threshold == Instrumentation.NO_THRESHOLD_DEFINED ?
+        return threshold == Instrumentor.NO_THRESHOLD_DEFINED ?
                 Optional.empty() :
                 Optional.of(threshold);
     }
