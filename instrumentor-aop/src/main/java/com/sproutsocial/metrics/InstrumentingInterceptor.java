@@ -54,7 +54,7 @@ public class InstrumentingInterceptor implements MethodInterceptor {
     private Optional<Double> getErrorThreshold(Method method) {
         final double threshold = method.getDeclaredAnnotation(Instrumented.class)
                 .errorThreshold();
-        return threshold == Instrumentation.NO_THRESHOLD_DEFINED ?
+        return threshold == Instrumentor.NO_THRESHOLD_DEFINED ?
                 Optional.empty() :
                 Optional.of(threshold);
     }

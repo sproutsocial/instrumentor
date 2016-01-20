@@ -15,7 +15,7 @@ import java.lang.annotation.Target;
 public @interface Instrumented {
 
     String name() default "";
-    double errorThreshold() default Instrumentation.NO_THRESHOLD_DEFINED;
+    double errorThreshold() default Instrumentor.NO_THRESHOLD_DEFINED;
 
 
 }
