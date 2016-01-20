@@ -5,7 +5,6 @@ import static com.sproutsocial.metrics.Instrumentation.registerErrorGauges;
 import static com.sproutsocial.metrics.Instrumentation.registerHealthCheck;
 import static com.sproutsocial.metrics.Instrumentation.shouldRegisterHealthCheck;
 
-
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.function.Predicate;
@@ -27,6 +26,19 @@ public class Instrumentor {
     private final MetricRegistry metricRegistry;
     private final Optional<HealthCheckRegistry> healthCheckRegistry;
     private final Predicate<Throwable> filter;
+
+    private class Context {
+        private Meter errorMeter;
+        private Timer timer;
+        private Counter inFlight;
+
+        Context(String name) {
+            errorMeter = metricRegistry.meter(name + ".errors");
+            timer = metricRegistry.timer(name);
+            inFlight = metricRegistry.counter(name + ".inFlight");
+        }
+
+    }
 
     public Instrumentor() {
         this(new MetricRegistry(), new HealthCheckRegistry(), any -> true);
@@ -74,23 +86,19 @@ public class Instrumentor {
             Optional<Double> errorThreshold
     ) {
 
-        final Meter errorMeter = metricRegistry.meter(name + ".errors");
-        final Timer timer = metricRegistry.timer(name);
-        final Counter inFlight = metricRegistry.counter(name + ".inFlight");
-
-        registerMetricsAndHealthChecks(timer, errorMeter, name, errorThreshold);
+        final Context context = createInstrumentationContext(name, errorThreshold);
 
         return () -> {
-            inFlight.inc();
-            try (@SuppressWarnings("unused") Timer.Context ctx = timer.time()){
+            context.inFlight.inc();
+            try (@SuppressWarnings("unused") Timer.Context ctx = context.timer.time()){
                 return callable.call();
             } catch (Exception e) {
                 if (filter.test(e)) {
-                    errorMeter.mark();
+                    context.errorMeter.mark();
                 }
                 throw e;
             } finally {
-                inFlight.dec();
+                context.inFlight.dec();
             }
         };
     }
@@ -101,23 +109,19 @@ public class Instrumentor {
             Optional<Double> errorThreshold
     ) {
 
-        final Meter errorMeter = metricRegistry.meter(name + ".errors");
-        final Timer timer = metricRegistry.timer(name);
-        final Counter inFlight = metricRegistry.counter(name + ".inFlight");
-
-        registerMetricsAndHealthChecks(timer, errorMeter, name, errorThreshold);
+        final Context context = createInstrumentationContext(name, errorThreshold);
 
         return () -> {
-            inFlight.inc();
-            try (@SuppressWarnings("unused") Timer.Context ctx = timer.time()){
+            context.inFlight.inc();
+            try (@SuppressWarnings("unused") Timer.Context ctx = context.timer.time()){
                 runnable.run();
             } catch (Exception e) {
                 if (filter.test(e)) {
-                    errorMeter.mark();
+                    context.errorMeter.mark();
                 }
                 throw e;
             } finally {
-                inFlight.dec();
+                context.inFlight.dec();
             }
         };
     }
@@ -128,37 +132,34 @@ public class Instrumentor {
             Optional<Double> errorThreshold
     ) {
 
-        final Meter errorMeter = metricRegistry.meter(name + ".errors");
-        final Timer timer = metricRegistry.timer(name);
-        final Counter inFlight = metricRegistry.counter(name + ".inFlight");
-
-        registerMetricsAndHealthChecks(timer, errorMeter, name, errorThreshold);
+        final Context context = createInstrumentationContext(name, errorThreshold);
 
         return () -> {
-            inFlight.inc();
-            try (@SuppressWarnings("unused") Timer.Context ctx = timer.time()){
+            context.inFlight.inc();
+            try (@SuppressWarnings("unused") Timer.Context ctx = context.timer.time()){
                 runnable.run();
             } catch (Exception e) {
                 if (filter.test(e)) {
-                    errorMeter.mark();
+                    context.errorMeter.mark();
                 }
                 throw e;
             } finally {
-                inFlight.dec();
+                context.inFlight.dec();
             }
         };
     }
 
-    private void registerMetricsAndHealthChecks(Timer timer, Meter errorMeter, String name, Optional<Double> errorThreshold) {
+    private Context createInstrumentationContext(String name, Optional<Double> errorThreshold) {
+        final Context context = new Context(name);
         if (!errorGaugesExist(metricRegistry, name)) {
-            registerErrorGauges(metricRegistry, name, errorMeter, timer);
+            registerErrorGauges(metricRegistry, name, context.errorMeter, context.timer);
         }
 
         if (shouldRegisterHealthCheck(healthCheckRegistry, name, errorThreshold)) {
-            registerHealthCheck(healthCheckRegistry.get(), name, errorThreshold, errorMeter, timer);
+            registerHealthCheck(healthCheckRegistry.get(), name, errorThreshold, context.errorMeter, context.timer);
         }
+        return context;
     }
-
 
     public <T> Callable<T> instrumenting(
             Callable<T> callable,
