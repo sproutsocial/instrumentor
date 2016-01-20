@@ -1,9 +1,5 @@
 package com.sproutsocial.metrics;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-
-import java.util.Optional;
 import java.util.function.Predicate;
 
 import com.codahale.metrics.MetricRegistry;
@@ -20,46 +16,70 @@ import com.google.inject.matcher.Matchers;
  */
 public class InstrumentedAnnotations extends AbstractModule {
 
-    private final InstrumentingInterceptor interceptor;
+    private final MetricRegistry metricRegistry;
+    private final HealthCheckRegistry healthCheckRegistry;
+    private final Predicate<Throwable> exceptionFilter;
 
-    public InstrumentedAnnotations(InstrumentingInterceptor interceptor) {
-        this.interceptor = interceptor;
+    public static Builder builder() {
+        return new Builder();
     }
 
-    public static InstrumentedAnnotations forRegistry(
-            MetricRegistry metricRegistry
-    ) {
-        return forRegistries(metricRegistry, null);
-    }
-
-    public static InstrumentedAnnotations forRegistries(
-            MetricRegistry metricRegistry,
-            HealthCheckRegistry healthCheckRegistry
-    ) {
-        return forRegistries(metricRegistry, healthCheckRegistry, any -> true);
-    }
-    
-    public static InstrumentedAnnotations forRegistries(
+    private InstrumentedAnnotations(
             MetricRegistry metricRegistry,
             HealthCheckRegistry healthCheckRegistry,
-            Predicate<Throwable> filter
+            Predicate<Throwable> exceptionFilter
     ) {
-        checkNotNull(metricRegistry);
-        return new InstrumentedAnnotations(
-                new InstrumentingInterceptor(
-                        metricRegistry,
-                        Optional.ofNullable(healthCheckRegistry),
-                        filter
-                )
-        );
+        this.metricRegistry = metricRegistry;
+        this.healthCheckRegistry = healthCheckRegistry;
+        this.exceptionFilter = exceptionFilter;
     }
-    
+
+    public InstrumentedAnnotations() {
+        this(new MetricRegistry(), new HealthCheckRegistry(), any -> true);
+    }
+
     @Override
     protected void configure() {
+
+        bind(MetricRegistry.class).toInstance(metricRegistry);
+        bind(HealthCheckRegistry.class).toInstance(healthCheckRegistry);
+
         bindInterceptor(
                 Matchers.any(),
                 Matchers.annotatedWith(Instrumented.class),
-                interceptor
+                new InstrumentingInterceptor(
+                        metricRegistry,
+                        healthCheckRegistry,
+                        exceptionFilter
+                )
         );
+    }
+
+    public static class Builder {
+
+        private MetricRegistry metricRegistry = new MetricRegistry();
+        private HealthCheckRegistry healthCheckRegistry = new HealthCheckRegistry();
+        private Predicate<Throwable> exceptionFilter = any -> true;
+
+        private Builder(){}
+
+        public Builder metricRegistry(MetricRegistry metricRegistry) {
+            this.metricRegistry = metricRegistry;
+            return this;
+        }
+
+        public Builder healthCheckRegistry(HealthCheckRegistry healthCheckRegistry) {
+            this.healthCheckRegistry = healthCheckRegistry;
+            return this;
+        }
+
+        public Builder exceptionFilter(Predicate<Throwable> exceptionFilter) {
+            this.exceptionFilter = exceptionFilter;
+            return this;
+        }
+
+        public InstrumentedAnnotations build() {
+            return new InstrumentedAnnotations(metricRegistry, healthCheckRegistry, exceptionFilter);
+        }
     }
 }

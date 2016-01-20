@@ -40,7 +40,10 @@ public class InstrumentorTest {
 
     @Before
     public void setUp() throws Exception {
-        instrumentor = new Instrumentor(metricRegistry, healthCheckRegistry, any -> true);
+        instrumentor = Instrumentor.builder()
+                .metricRegistry(metricRegistry)
+                .healthCheckRegistry(healthCheckRegistry)
+                .build();
     }
 
     @Test
@@ -50,7 +53,6 @@ public class InstrumentorTest {
         when(metricRegistry.counter(NAME + ".inFlight")).thenReturn(counter);
         when(timer.time()).thenReturn(context);
         Runnable runnable =  () -> { throw new RuntimeException();};
-
 
         try {
             instrumentor.instrumenting(runnable, NAME, 0.1).run();
@@ -102,6 +104,29 @@ public class InstrumentorTest {
 
         try {
             instrumentor.call(callable, NAME, 0.1);
+        } catch (Exception ignored) {}
+
+        assertTrue(healthCheckRegistry.getNames().contains(NAME));
+
+
+        final InOrder inOrder = inOrder(counter, errorMeter, context);
+        inOrder.verify(counter, times(1)).inc();
+        inOrder.verify(context, times(1)).close();
+        inOrder.verify(errorMeter, times(1)).mark();
+        inOrder.verify(counter, times(1)).dec();
+    }
+
+    @Test
+    public void testCheckedCallable() throws Exception {
+        when(metricRegistry.timer(NAME)).thenReturn(timer);
+        when(metricRegistry.meter(NAME + ".errors")).thenReturn(errorMeter);
+        when(metricRegistry.counter(NAME + ".inFlight")).thenReturn(counter);
+        when(timer.time()).thenReturn(context);
+        Callable<Void> callable =  () -> { throw new Exception();};
+
+
+        try {
+            instrumentor.callChecked(callable, NAME, 0.1);
         } catch (Exception ignored) {}
 
         assertTrue(healthCheckRegistry.getNames().contains(NAME));

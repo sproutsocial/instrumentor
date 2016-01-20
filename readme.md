@@ -7,7 +7,7 @@ Some handy instrumentation utilities for use with [Metrics](https://dropwizard.g
 Instrumenting Methods 
 ---------------------
 
-This metrics module's primary aim is to increase the ease with which you
+This module's primary aim is to increase the ease with which you
 can monitor calls to the key methods in your java application. If you're not sure
 what methods to instrument or why you should be instrumenting anything
 in the first place, you should go check out [Coda Hale's Metrics Introduction](https://youtu.be/czes-oa0yik?t=6m29s)
@@ -118,23 +118,37 @@ How to Instrument
 
 #### Instrumenting with Instrumentor
 
-The easiest way to instrument methods is using the `Instrumentor` class. Continuing
-the example from earlier, lets instrument the `sayHello` method. To instrument
-methods that return `void`, you'll want to use `Instrumentor#run`.
+The easiest way to instrument methods is using the `Instrumentor` class. 
 
-To build an Instrumentor, we'll need a `MetricRegistry` and a `HealthCheckRegistry`:
+To get it, you'll need to include `instrumentor-core`:
 
-```java
-    MetricRegistry metricRegistry = new MetricRegistry();
-    HealthCheckRegistry metricRegistry = new MetricRegistry();
-    Instrumentor instrumentor = new Instrumentor(metricRegistry, healthCheckRegistry);
 ```
+<dependency>
+  <groupId>com.sproutsocial</groupId>
+  <artifactId>instrumentor-core</artifactId>
+  <version>1.0.0</version>
+</dependency>
+```
+
+Continuing the example from earlier, lets instrument the `sayHello` method. To instrument
+methods that return `void`, you'll want to use `Instrumentor#run`.
 
 To instrument the method, we'll need two things:
 
 - an instance of `java.util.concurrent.Runnable`
-- a `String` for the name of the method.
+- a name, `String` which will be the prefix for the generated metrics. 
 
+##### Easier naming
+
+In the example above, we used `"com.mycompany.Example.sayHello"` as the base name,
+but there's nothing special about the name, it can be any string. 
+
+If you're so inclined, you can use `MetricRegistry.name(Class<?> klass, String... names)`
+to name your method:
+
+```java
+    String methodName = MetricRegistry.name(Example.class, "sayHello"); // "com.mycompany.Example.sayHello"
+```
 
 ```java
 package com.mycompany;
@@ -146,13 +160,10 @@ public class Example {
     
     public static void main(String[] args) {
     
-        // make an instance of Example
-        final Example example = new Example();
-        
-        // build the instrumentor
-        MetricRegistry metricRegistry = new MetricRegistry();
-        HealthCheckRegistry metricRegistry = new MetricRegistry();
-        Instrumentor instrumentor = new Instrumentor(metricRegistry, healthCheckRegistry);
+        Example example = new Example();
+
+        String baseName = MetricRegistry.name(Example.class, "sayHello"); 
+        Instrumentor instrumentor = new Instrumentor();
         
         Runnable runnable =  new Runnable() {
             public void run() {
@@ -161,7 +172,7 @@ public class Example {
         };
         
         // run the method
-        instrumentor.run(runnable, "com.mycompany.Example.sayHello");
+        instrumentor.run(runnable, baseName);
     }
 }
 ```
@@ -175,98 +186,143 @@ Instead of
 
 ```java
         
-        Runnable runnable =  new Runnable() {
-            public void run() {
-                example.sayHello(); 
-            }
-        };
-        
-        // run the method
-        instrumentor.run(runnable, "com.mycompany.Example.sayHello");
-}
+Runnable runnable =  new Runnable() {
+    public void run() {
+        example.sayHello(); 
+    }
+};
+
+// run the method
+instrumentor.run(runnable, baseName);
 ```
 
 we can use 
 
 ```java
-        instrumentor.run(() -> example.sayHello(), "com.mycompany.Example.sayHello");
+instrumentor.run(() -> example.sayHello(), baseName);
 ```
 
 or even
 
 ```java
-        instrumentor.run(example::sayHello, "com.mycompany.Example.sayHello");
+instrumentor.run(example::sayHello, baseName);
 ```
 
 ##### Adding a healthcheck
 
-To add a healthcheck, you need to supply an error threshold (`double`) as the third argument.
+To add a healthcheck, supply an error threshold (`double`) as the third argument.
 
 ```java
-        instrumentor.run(example::sayHello, "com.mycompany.Example.sayHello", 0.1);
+instrumentor.run(example::sayHello, baseName, 0.1);
 ```
 
-##### Easier naming
+##### Instrumenting a callable
 
-If you're so inclined, you can use `MetricRegistry.name(Class<?> klass, String... names)`
-to name your method:
-
-```java
-        instrumentor.run(
-            example::sayHello,
-            MetricRegistry.name(Example.class, "sayHello"),
-            0.1
-        );
-```
-
-##### Using Guice, ensuring you're using singleton registries
-
-You should probably use guice to inject your MetricRegistry and HealthCheckRegistry.
-
-Here's an example of a simple module that binds two registries and provides an instrumentor.
+You can also instrument instances of `java.until.concurrent.Callable`:
 
 ```java
+package com.mycompany;
 
-class InstrumentorModule extends AbstractModule {
-
-    public void configure() {
-        bind(MetricRegistry.class).toInstance(new MetricRegistry());
-        bind(HealthCheckRegistry.class).toInstance(new HealthCheckRegistry());
-        bind(new TypeLiteral<Predicate<Throwable>>() {}).toInstance(any -> true);
+public class Example {
+    public String getGreeting() {
+        return "Hello, World";
     }
     
     public static void main(String[] args) {
-        Injector injector = Guice.createInjector(new InstrumentorModule());
+    
+        Example example = new Example();
+
+        String baseName = MetricRegistry.name(Example.class, "sayHello"); 
+        Instrumentor instrumentor = new Instrumentor();
         
-        Instrumentor instrumentor = Injector.getInstance(Instrumentor.class);
         
-        instrumentor.run(
-            () -> System.out.println("Hello!"),
-            "sayHello"
-        );
+        // run the method
+        String greeting = instrumentor.call(example::getGreeting, baseName); // "Hello, World"
+    }
+}
+```
+
+##### Inspecting Results
+
+The no-arg constructor for `Instrumentor` will create its own
+underlying `MetricRegistry` and `HealthCheckRegistry`. It exposes
+them through accessors so you can inspect the results.
+
+
+
+```java
+package com.mycompany;
+
+public class Example {
+    public void sayHello() {
+        System.out.println("Hello, World");
+    }
+    
+    public static void main(String[] args) {
+    
+        Example example = new Example();
+
+        String baseName = MetricRegistry.name(Example.class, "sayHello"); 
+        Instrumentor instrumentor = new Instrumentor();
         
-        // same registry used by the instrumentor
-        HealthCheckRegistry healthCheckRegistry = injector.getInstance(HealthCheckRegistry.class);
-        
-        HealthCheck.Result result = healthCheckRegistry.runHealthCheck("sayHello");
-        
-        assert result.isHealthy();
+        // run the method
+        instrumentor.run(example::sayHello, baseName);
+
+        // get the MetricRegistry
+        MetricRegistry metricRegistry = instrumentor.getMetricRegistry();
+
+        Meter meter = metricRegistry.meter(baseName);
+
+        assert meter.getCount() > 0;
     }
 }
 ```
 
 
+##### Supplying your own registries
 
-**Note** To build an Instrumentor with Guice, you'll need to also bind a
-`Predicate<Throwable>`, which will filter which exceptions get tracked.
+If you want to supply your own registries, you can use `Instrumentor.Builder`
 
-For example, if you wanted to only track checked exceptions, you could
 
 ```java
-bind(new TypeLiteral<Predicate<Throwable>>() {}).toInstance(e -> ! e instanceof RuntimeException);
+package com.mycompany;
+
+public class Example {
+    public void sayHello() {
+        System.out.println("Hello, World");
+    }
+    
+    public static void main(String[] args) {
+    
+        Example example = new Example();
+
+        String baseName = MetricRegistry.name(Example.class, "sayHello"); 
+
+        // our own registries
+        MetricRegistry metricRegistry = new MetricRegistry();
+        HealthCheckRegistry healthCheckRegistry = new HealthCheckRegistry();
+
+
+        // pass into Instrumentor via Builder
+        Instrumentor instrumentor = Instrumentor.builder()
+                .metricRegistry(metricRegistry)
+                .metricRegistry(healthCheckRegistry)
+                .build();
+        
+        // run the method
+        instrumentor.run(example::sayHello, baseName);
+
+        Meter meter = metricRegistry.meter(baseName);
+
+        assert meter.getCount() > 0;
+
+        HealthCheck.Result result = healthCheckRegistry.runHealthCheck(baseName);
+
+        assert result.isHealthy();
+    }
+}
 ```
 
-In the example above, we bound the `Predicate` to `any -> true`, so that all exceptions will be tracked.
 
 Instrumenting with Guice AOP
 ----------------------------
@@ -274,39 +330,48 @@ Instrumenting with Guice AOP
 There are also modules for Instrumenting using annotations and
 [Guice AOP](https://github.com/google/guice/wiki/AOP).
 
-If you include an instance of `InstrumentedAnnotationsModule` in your
-call to `Guice.createInjector` (see below), then you can use annotations
-to instrument methods:
+You'll need to include the `instrumentor-aop` module:
+
+```
+<dependency>
+  <groupId>com.sproutsocial</groupId>
+  <artifactId>instrumentor-aop</artifactId>
+  <version>1.0.0</version>
+</dependency>
+```
+
+If you include an instance of the `InstrumentedAnnotations` module in your
+call to `Guice.createInjector()` (see below), then you can use the `@Instrumented`
+annotation to instrument methods. The module will also bind a `MetricRegistry`
+and a `HealthCheckRegistry`.
 
 
 ```java
 package com.mycompany;
 
 class Example {
-    @InstrumentedMethod
+    @Instrumented
     public void sayHello() {
         System.out.println("Hello, World");
     }
     
     public static void main(String[] args) {
-        MetricRegistry metricRegistry = new MetricRegistry();
-        HealthCheckRegistry healthCheckRegistry = new HealthCheckRegistry();
-        
-        Injector injector = Guice.createInjector(
-            InstrumentedMethodAnnotations.fromRegistries(metricRegistry, healthCheckRegistry)
-        );
+        Injector injector = Guice.createInjector(new InstrumentedAnnotations());
         
         Example example =  injector.getInstance(Example.class);
         
         example.sayHello();
         example.sayHello();
         
-        Timer timer = metricRegistry.getMeters().get("com.mycompany.Example.sayHello");
         
+        MetricRegistry metricRegistry = injector.getInstance(MetricRegistry.class);
+
+        Timer timer = metricRegistry.getMeters().get("com.mycompany.Example.sayHello");
+
         assert timer.getOneMinuteRate() > 0;
         
         Meter meter = metricRegistry.getMeters().get("com.mycompany.Example.sayHello.errors");
-        
+
         assert meter.getOneMinuteRate() == 0;
     }
 }
@@ -314,36 +379,34 @@ class Example {
 
 #### Method names
 
-By default, the methods annotated by `@InstrumentedMethod` will be named
+By default, the methods annotated by `@Instrumented` method will be named
 
 ```
 com.somepackage.ClassName.methodName
 ```
 
-But that can be overriden using the `name` attribute of `InstrumentedMethod`:
+But that can be overriden using the `name` attribute of `Instrumented`:
 
 
 ```java
 package com.mycompany;
 
 class Example {
-    @InstrumentedMethod(name="mySweetName")
+    @Instrumented(name="mySweetName")
     public void sayHello() {
         System.out.println("Hello, World");
     }
     
     public static void main(String[] args) {
-        MetricRegistry metricRegistry = new MetricRegistry();
-        HealthCheckRegistry healthCheckRegistry = new HealthCheckRegistry();
         
-        Injector injector = Guice.createInjector(
-            InstrumentedMethodAnnotations.fromRegistries(metricRegistry, healthCheckRegistry)
-        );
+        Injector injector = Guice.createInjector(new InstrumentedAnnotations());
         
         Example example =  injector.getInstance(Example.class);
         
         example.sayHello();
         example.sayHello();
+
+        MetricRegistry metricRegistry = injector.getInstance(MetricRegistry.class);
         
         Timer timer = metricRegistry.getMeters().get("mySweetName");
         
@@ -359,30 +422,73 @@ class Example {
 #### Health Check
 
 To add a healthcheck for the error percentage, just add an `errorThreshold`
-to the `@InstrumentedMethod` annotation.
+to the `@Instrumented` annotation.
 
 
 ```java
 package com.mycompany;
 
 class Example {
-    @InstrumentedMethod(errorThreshold=0.1)
+    @Instrumented(errorThreshold=0.1)
     public void sayHello() {
         System.out.println("Hello, World");
     }
     
     public static void main(String[] args) {
-        MetricRegistry metricRegistry = new MetricRegistry();
-        HealthCheckRegistry healthCheckRegistry = new HealthCheckRegistry();
         
-        Injector injector = Guice.createInjector(
-            InstrumentedMethodAnnotations.fromRegistries(metricRegistry, healthCheckRegistry)
-        );
+        Injector injector = Guice.createInjector(new InstrumentedAnnotations());
         
         Example example =  injector.getInstance(Example.class);
         
         example.sayHello();
         example.sayHello();
+
+        HealthCheckRegistry healthCheckRegistry = injector.getInstance(HealthCheckRegistry.class);
+        
+        HealthCheck.Result result = healthCheckRegistry.runHealthCheck(
+            "com.mycompany.Example.sayHello"
+        );
+        
+        assert result.isHealthy();
+    }
+}
+```
+
+##### Supplying your own registries
+
+Like `Instrumentor`, `InstrumentedAnnotations` has a `Builder` that you can use 
+to supply your own registries.
+
+```java
+package com.mycompany;
+
+class Example {
+    @Instrumented(errorThreshold=0.1)
+    public void sayHello() {
+        System.out.println("Hello, World");
+    }
+    
+    public static void main(String[] args) {
+
+        // our own registries
+        MetricRegistry metricRegistry = new MetricRegistry();
+        HealthCheckRegistry healthCheckRegistry = new HealthCheckRegistry();
+        
+        InstrumentedAnnotations annotationsModule = InstrumentedAnnotations.builder()
+            .metricRegistry(metricRegistry)
+            .healthCheckRegistry(healthCheckRegistry)
+            .build();
+
+        Injector injector = Guice.createInjector(annotationsModule);
+        
+        Example example =  injector.getInstance(Example.class);
+        
+        example.sayHello();
+        example.sayHello();
+
+        Timer timer = metricRegistry.getMeters().get("mySweetName");
+        
+        assert timer.getOneMinuteRate() > 0;
         
         HealthCheck.Result result = healthCheckRegistry.runHealthCheck(
             "com.mycompany.Example.sayHello"
@@ -395,19 +501,19 @@ class Example {
 
 ##### AOP Gotchas
 
-Not seeing metrics that you think you should be? There 
-are a couple of gotchas with guice AOP.
+Not seeing metrics that you think you should be? There are a couple of gotchas with guice AOP.
 
-1. You'll need to make sure that the registries used to build the `InstrumentedMethodAnnotations`
-module are the same as the ones you're reading from.
-
-2. AOP only works for public methods being called by other classes. This is 
+1. AOP only works for methods being called by other classes. This is 
 because Guice AOP works by inserting a proxy in front of the instrumented class
 wherever it is injected. Calls of instrumented methods from within the same class
 will not go through this proxy.
 
-3. AOP will only be applied to objects created by guice. If you just use `new Example()`,
-the annotation will be ignored.
+2. AOP will only be applied to objects created by guice. If you just use `new Example()`,
+the annotation will have no effect.
+
+3. You'll need to make sure that the registries used to build the `InstrumentedAnnotations`
+module are the same as the ones you're reading from. 
+
 
 Reporting Your Metrics
 -----------------
