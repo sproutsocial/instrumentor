@@ -1,7 +1,10 @@
 package com.sproutsocial.metrics;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 
@@ -16,6 +19,7 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
+import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.inject.Guice;
 
@@ -33,13 +37,15 @@ public class InstrumentingInterceptorTest {
     private @Mock Timer timer;
     private @Mock Counter counter;
     private @Mock Timer.Context context;
+
     private @Mock MetricRegistry metricRegistry;
+    private @Mock HealthCheckRegistry healtchCheckRegistry;
 
     private TestStub testStub;
 
 
     public static class TestStub {
-        @Instrumented(name = NAME)
+        @Instrumented(name = NAME, errorThreshold = 0.5d)
         public void faultyMethod() {
             throw new RuntimeException();
         }
@@ -48,11 +54,11 @@ public class InstrumentingInterceptorTest {
     @Before
     public void setUp() throws Exception {
         final InstrumentedAnnotations instrumentedAnnotations =
-                InstrumentedAnnotations.forRegistries(
-                        metricRegistry,
-                        new HealthCheckRegistry()
-                );
-        
+                InstrumentedAnnotations.builder()
+                        .metricRegistry(metricRegistry)
+                        .healthCheckRegistry(healtchCheckRegistry)
+                        .build();
+
         testStub = Guice.createInjector(instrumentedAnnotations)
                         .getInstance(TestStub.class);
     }
@@ -68,6 +74,8 @@ public class InstrumentingInterceptorTest {
         try {
             testStub.faultyMethod();
         } catch (RuntimeException ignored) {}
+
+        verify(healtchCheckRegistry, times(1)).register(eq(NAME), any(HealthCheck.class));
 
         InOrder inOrder = inOrder(context, errorMeter, counter);
         inOrder.verify(counter, times(1)).inc();

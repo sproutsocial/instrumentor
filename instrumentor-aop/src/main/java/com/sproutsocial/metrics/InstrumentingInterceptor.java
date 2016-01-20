@@ -31,13 +31,13 @@ public class InstrumentingInterceptor implements MethodInterceptor {
     
 
     private final MetricRegistry metricRegistry;
-    private final Optional<HealthCheckRegistry> healthCheckRegistry;
+    private final HealthCheckRegistry healthCheckRegistry;
     private final Predicate<Throwable> filter;
 
     @Inject
     public InstrumentingInterceptor(
             MetricRegistry metricRegistry,
-            Optional<HealthCheckRegistry> healthCheckRegistry,
+            HealthCheckRegistry healthCheckRegistry,
             Predicate<Throwable> filter
     ) {
         this.metricRegistry = metricRegistry;
@@ -62,7 +62,7 @@ public class InstrumentingInterceptor implements MethodInterceptor {
         }
 
         if (shouldRegisterHealthCheck(healthCheckRegistry, name, threshold)) {
-            registerHealthCheck(healthCheckRegistry.get(), name, threshold, errorMeter, timer);
+            registerHealthCheck(healthCheckRegistry, name, threshold, errorMeter, timer);
         }
 
         inFlight.inc();

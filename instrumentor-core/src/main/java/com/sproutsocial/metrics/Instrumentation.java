@@ -23,10 +23,10 @@ import com.sproutsocial.metrics.healthchecks.HealthChecks;
 
     private Instrumentation() {}
 
-    static <T> boolean shouldRegisterHealthCheck(Optional<HealthCheckRegistry> healthCheckRegistry, String name, Optional<T> ceiling) {
-        return healthCheckRegistry.isPresent() &&
+    static <T> boolean shouldRegisterHealthCheck(HealthCheckRegistry healthCheckRegistry, String name, Optional<T> ceiling) {
+        return healthCheckRegistry != null &&
                 ceiling.isPresent() &&
-                !healthCheckExists(healthCheckRegistry.get(), name);
+                !healthCheckExists(healthCheckRegistry, name);
     }
 
     static boolean healthCheckExists(HealthCheckRegistry healthCheckRegistry, String name) {

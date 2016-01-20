@@ -24,8 +24,8 @@ import com.google.common.base.Throwables;
 public class Instrumentor {
 
     private final MetricRegistry metricRegistry;
-    private final Optional<HealthCheckRegistry> healthCheckRegistry;
-    private final Predicate<Throwable> filter;
+    private final HealthCheckRegistry healthCheckRegistry;
+    private final Predicate<Throwable> exceptionFilter;
 
     private class Context {
         private Meter errorMeter;
@@ -40,36 +40,27 @@ public class Instrumentor {
 
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
     public Instrumentor() {
         this(new MetricRegistry(), new HealthCheckRegistry(), any -> true);
     }
 
     public Instrumentor(
-            MetricRegistry metricRegistry
-    ) {
-        this(metricRegistry, null, any -> true);
-    }
-
-    public Instrumentor(
-        MetricRegistry metricRegistry,
-        HealthCheckRegistry healthCheckRegistry
-    ) {
-        this(metricRegistry, healthCheckRegistry, any -> true);
-    }
-
-    public Instrumentor(
             MetricRegistry metricRegistry,
             HealthCheckRegistry healthCheckRegistry,
-            Predicate<Throwable> filter) {
+            Predicate<Throwable> exceptionFilter) {
         this.metricRegistry = metricRegistry;
-        this.healthCheckRegistry = Optional.ofNullable(healthCheckRegistry);
-        this.filter = filter;
+        this.healthCheckRegistry = healthCheckRegistry;
+        this.exceptionFilter = exceptionFilter;
     }
 
     /**
      * @return the underlying {@link HealthCheckRegistry}
      */
-    public Optional<HealthCheckRegistry> getHealthCheckRegistry() {
+    public HealthCheckRegistry getHealthCheckRegistry() {
         return healthCheckRegistry;
     }
 
@@ -93,7 +84,7 @@ public class Instrumentor {
             try (@SuppressWarnings("unused") Timer.Context ctx = context.timer.time()){
                 return callable.call();
             } catch (Exception e) {
-                if (filter.test(e)) {
+                if (exceptionFilter.test(e)) {
                     context.errorMeter.mark();
                 }
                 throw e;
@@ -116,7 +107,7 @@ public class Instrumentor {
             try (@SuppressWarnings("unused") Timer.Context ctx = context.timer.time()){
                 runnable.run();
             } catch (Exception e) {
-                if (filter.test(e)) {
+                if (exceptionFilter.test(e)) {
                     context.errorMeter.mark();
                 }
                 throw e;
@@ -139,7 +130,7 @@ public class Instrumentor {
             try (@SuppressWarnings("unused") Timer.Context ctx = context.timer.time()){
                 runnable.run();
             } catch (Exception e) {
-                if (filter.test(e)) {
+                if (exceptionFilter.test(e)) {
                     context.errorMeter.mark();
                 }
                 throw e;
@@ -156,7 +147,7 @@ public class Instrumentor {
         }
 
         if (shouldRegisterHealthCheck(healthCheckRegistry, name, errorThreshold)) {
-            registerHealthCheck(healthCheckRegistry.get(), name, errorThreshold, context.errorMeter, context.timer);
+            registerHealthCheck(healthCheckRegistry, name, errorThreshold, context.errorMeter, context.timer);
         }
         return context;
     }
@@ -282,4 +273,30 @@ public class Instrumentor {
         return callChecked(callable, name, Optional.of(errorThreshold));
     }
 
+    public static class Builder {
+        private MetricRegistry metricRegistry = new MetricRegistry();
+        private HealthCheckRegistry healthCheckRegistry = null;
+        private Predicate<Throwable> filter = any -> true;
+
+        private Builder() {}
+
+        public Builder metricRegistry(MetricRegistry metricRegistry) {
+            this.metricRegistry = metricRegistry;
+            return this;
+        }
+
+        public Builder healthCheckRegistry(HealthCheckRegistry healthCheckRegistry) {
+            this.healthCheckRegistry = healthCheckRegistry;
+            return this;
+        }
+
+        public Builder exceptionFilter(Predicate<Throwable> filter) {
+            this.filter = filter;
+            return this;
+        }
+
+        public Instrumentor build() {
+            return new Instrumentor(metricRegistry, healthCheckRegistry, filter);
+        }
+    }
 }
