@@ -3,7 +3,7 @@
 
     <groupId>com.sproutsocial</groupId>
     <artifactId>instrumentor</artifactId>
-    <version>0.7.3</version>
+    <version>0.7.4-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Instrumentor</name>
     <description>Metrics toolkit for instrumentation</description>
@@ -46,7 +46,7 @@
         <connection>scm:git:git://github.com/sproutsocial/instrumentor.git</connection>
         <developerConnection>scm:git:git@github.com:sproutsocial/instrumentor.git</developerConnection>
         <url>https://github.com/sproutsocial/instrumentor</url>
-        <tag>0.7.3</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <issueManagement>
