@@ -50,7 +50,7 @@ import com.sproutsocial.metrics.healthchecks.HealthChecks;
     }
 
     static void registerErrorGauges(MetricRegistry metricRegistry, String name, Meter errorMeter, Timer timer) {
-        final Gauge<Double> totalErrorPct = Gauges.ratioOf(errorMeter, timer, m -> new Long(m.getCount()).doubleValue());
+        final Gauge<Double> totalErrorPct = Gauges.ratioOf(errorMeter, timer, m -> Long.valueOf(m.getCount()).doubleValue());
         final Gauge<Double> meanErrorPct = Gauges.ratioOf(errorMeter, timer, Metered::getMeanRate);
         final Gauge<Double> m1ErrorPct = Gauges.ratioOf(errorMeter, timer, Metered::getOneMinuteRate);
         final Gauge<Double> m5ErrorPct = Gauges.ratioOf(errorMeter, timer, Metered::getFiveMinuteRate);
