@@ -3,6 +3,9 @@ Instrumentor
 
 Instrumentation toolkit built on top of [Metrics](https://dropwizard.github.io/metrics/3.1.0/)
 
+#### Status
+[![Build Status](https://travis-ci.org/sproutsocial/instrumentor.svg?branch=master)](https://travis-ci.org/sproutsocial/instrumentor)
+
 
 Instrumenting Methods 
 ---------------------
