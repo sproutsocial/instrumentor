@@ -3,7 +3,7 @@
 
     <groupId>com.sproutsocial</groupId>
     <artifactId>instrumentor</artifactId>
-    <version>0.7.4-SNAPSHOT</version>
+    <version>0.7.4</version>
     <packaging>pom</packaging>
     <name>Instrumentor</name>
     <description>Metrics toolkit for instrumentation</description>
