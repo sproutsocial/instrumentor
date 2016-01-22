@@ -5,6 +5,7 @@ Instrumentation toolkit built on top of [Metrics](https://dropwizard.github.io/m
 
 #### Status
 [![Build Status](https://travis-ci.org/sproutsocial/instrumentor.svg?branch=master)](https://travis-ci.org/sproutsocial/instrumentor)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.sproutsocial/instrumentor/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.sproutsocial/instrumentor)
 
 
 Instrumenting Methods 
