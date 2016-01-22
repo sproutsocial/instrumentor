@@ -10,13 +10,9 @@ import com.google.common.collect.ImmutableSet;
 /**
  * Created on 4/19/15
  *
- *
- * A {@link HealthCheck} that reports healthy
- * as long as the underlying {@link Gauge} has a
- * value less than {@link this#ceiling}
- *
- * ceiling is an {@link Optional} because
- * this will ideally soon support a "floor" as well
+ * A {@link HealthCheck} that reports healthy as long as the underlying
+ * {@link Gauge}
+ * has a value less than a ceiling value, or included in a whitelist.
  *
  * @author horthy
  */
