@@ -3,7 +3,7 @@
 
     <groupId>com.sproutsocial</groupId>
     <artifactId>instrumentor</artifactId>
-    <version>0.7.5-SNAPSHOT</version>
+    <version>0.7.5</version>
     <packaging>pom</packaging>
     <name>Instrumentor</name>
     <description>Metrics toolkit for instrumentation</description>
@@ -53,6 +53,17 @@
         <system>GitHub</system>
         <url>https://github.com/sproutsocial/instrumentor/issues</url>
     </issueManagement>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
 
     <properties>
         <junit.version>4.12</junit.version>

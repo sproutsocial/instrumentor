@@ -127,7 +127,7 @@ To get it, you'll need to include `instrumentor-core`:
 <dependency>
   <groupId>com.sproutsocial</groupId>
   <artifactId>instrumentor-core</artifactId>
-  <version>0.7.4</version>
+  <version>0.7.5</version>
 </dependency>
 ```
 
