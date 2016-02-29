@@ -338,7 +338,7 @@ You'll need to include the `instrumentor-aop` module:
 <dependency>
   <groupId>com.sproutsocial</groupId>
   <artifactId>instrumentor-aop</artifactId>
-  <version>1.0.0</version>
+  <version>0.7.5</version>
 </dependency>
 ```
 
