@@ -38,28 +38,41 @@ public class InstrumentedAnnotations extends AbstractModule {
 
     @Override
     protected void configure() {
+        bindRegistries();
+        bindInterceptors();
+    }
 
+    private void bindRegistries() {
         bind(MetricRegistry.class).toInstance(metricRegistry);
         bind(HealthCheckRegistry.class).toInstance(healthCheckRegistry);
+    }
+
+    private void bindInterceptors() {
+        Instrumentor instrumentor = new Instrumentor(
+                metricRegistry,
+                healthCheckRegistry,
+                exceptionFilter
+        );
+
+        bindInterceptor(
+                Matchers.annotatedWith(Instrumented.class),
+                Matchers.not(Matchers.annotatedWith(Instrumented.class)), // in case of both, defer to method annotation
+                InstrumentingInterceptor.ofClasses(instrumentor)
+        );
 
         bindInterceptor(
                 Matchers.any(),
                 Matchers.annotatedWith(Instrumented.class),
-                new InstrumentingInterceptor(
-                        new Instrumentor(
-                                metricRegistry,
-                                healthCheckRegistry,
-                                exceptionFilter
-                        )
-                )
+                InstrumentingInterceptor.ofMethods(instrumentor)
         );
+
     }
 
     public static class Builder {
 
         private MetricRegistry metricRegistry = new MetricRegistry();
         private HealthCheckRegistry healthCheckRegistry = new HealthCheckRegistry();
-        private Predicate<Throwable> exceptionFilter = any -> true;
+        private Predicate<Throwable> exceptionFilter = ExceptionFilters.markAllExceptions();
 
         private Builder(){}
 

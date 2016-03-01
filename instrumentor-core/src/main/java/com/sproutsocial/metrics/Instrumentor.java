@@ -45,7 +45,7 @@ public class Instrumentor {
     public static class Builder {
         private MetricRegistry metricRegistry = new MetricRegistry();
         private HealthCheckRegistry healthCheckRegistry = null;
-        private Predicate<Throwable> filter = any -> true;
+        private Predicate<Throwable> filter = ExceptionFilters.markAllExceptions();
 
         private Builder() {}
 
