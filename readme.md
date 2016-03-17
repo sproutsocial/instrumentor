@@ -343,7 +343,8 @@ You'll need to include the `instrumentor-aop` module:
 ```
 
 You can use the `@Instrumented` annotation with the `InstrumentedAnnotations`
-guice module to specify methods that should be instrumented.
+guice module to specify methods that should be instrumented. You can add
+the `@Instrumented` annotation to a class to instrument all of its public methods.
 
 If you include an instance of the `InstrumentedAnnotations` module in your
 call to `Guice.createInjector()` (see below), then you can use the `@Instrumented`
@@ -371,7 +372,7 @@ class Example {
         
         MetricRegistry metricRegistry = injector.getInstance(MetricRegistry.class);
 
-        Timer timer = metricRegistry.getMeters().get("com.mycompany.Example.sayHello");
+        Timer timer = metricRegistry.getTimers().get("com.mycompany.Example.sayHello");
 
         assert timer.getOneMinuteRate() > 0;
         
@@ -413,7 +414,7 @@ class Example {
 
         MetricRegistry metricRegistry = injector.getInstance(MetricRegistry.class);
         
-        Timer timer = metricRegistry.getMeters().get("mySweetName");
+        Timer timer = metricRegistry.getTimers().get("mySweetName");
         
         assert timer.getOneMinuteRate() > 0;
         
@@ -491,7 +492,7 @@ class Example {
         example.sayHello();
         example.sayHello();
 
-        Timer timer = metricRegistry.getMeters().get("mySweetName");
+        Timer timer = metricRegistry.getTimers().get("mySweetName");
         
         assert timer.getOneMinuteRate() > 0;
         
