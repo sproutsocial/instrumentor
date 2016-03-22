@@ -3,19 +3,19 @@
     <parent>
         <artifactId>instrumentor</artifactId>
         <groupId>com.sproutsocial</groupId>
-        <version>0.8.0</version>
+        <version>0.8.1-SNAPSHOT</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>instrumentor-aop</artifactId>
-    <version>0.8.0</version>
+    <version>0.8.1-SNAPSHOT</version>
 
     <dependencies>
         <dependency>
             <groupId>com.sproutsocial</groupId>
             <artifactId>instrumentor-core</artifactId>
-            <version>0.8.0</version>
+            <version>0.8.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.google.inject</groupId>
