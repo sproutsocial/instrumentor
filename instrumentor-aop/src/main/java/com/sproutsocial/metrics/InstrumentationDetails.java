@@ -1,5 +1,6 @@
 package com.sproutsocial.metrics;
 
+import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Strings;
 import org.aopalliance.intercept.MethodInvocation;
 
@@ -31,7 +32,7 @@ public interface InstrumentationDetails {
             if (Strings.isNullOrEmpty(annotationName)) {
                 return Names.name(method);
             } else {
-                return annotationName + method.getName();
+                return MetricRegistry.name(annotationName, method.getName());
             }
         }
     }
