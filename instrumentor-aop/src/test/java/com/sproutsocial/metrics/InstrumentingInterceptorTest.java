@@ -24,6 +24,7 @@ import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
+
 /**
  * Created on 4/18/15
  *
@@ -43,11 +44,11 @@ public class InstrumentingInterceptorTest {
     private @Mock MetricRegistry metricRegistry;
     private @Mock HealthCheckRegistry healtchCheckRegistry;
 
-    private MethodTestStub methodTestStub;
+    private MethodAnnotatedTestStub methodTestStub;
     private ClassAnnotatedTestStub classTestStub;
 
 
-    public static class MethodTestStub {
+    public static class MethodAnnotatedTestStub {
         @Instrumented(name = NAME_METHOD, errorThreshold = 0.5d)
         public void faultyMethod() {
             throw new RuntimeException();
@@ -71,7 +72,7 @@ public class InstrumentingInterceptorTest {
 
         Injector injector = Guice.createInjector(instrumentedAnnotations);
 
-        methodTestStub = injector.getInstance(MethodTestStub.class);
+        methodTestStub = injector.getInstance(MethodAnnotatedTestStub.class);
         classTestStub = injector.getInstance(ClassAnnotatedTestStub.class);
     }
 
@@ -99,7 +100,7 @@ public class InstrumentingInterceptorTest {
 
     @Test
     public void testClassAnnotation() throws Exception {
-        String methodName = NAME_CLASS + "faultyMethod";
+        String methodName = NAME_CLASS + ".faultyMethod";
 
         when(metricRegistry.timer(methodName)).thenReturn(timer);
         when(metricRegistry.meter(methodName + ".errors")).thenReturn(errorMeter);

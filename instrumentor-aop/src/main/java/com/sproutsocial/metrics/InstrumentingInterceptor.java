@@ -16,7 +16,7 @@ public class InstrumentingInterceptor implements MethodInterceptor {
     private final Instrumentor instrumentor;
     private final InstrumentationDetails instrumentationDetails;
 
-    private InstrumentingInterceptor(
+    public InstrumentingInterceptor(
             Instrumentor instrumentor,
             InstrumentationDetails instrumentationDetails
     ) {
