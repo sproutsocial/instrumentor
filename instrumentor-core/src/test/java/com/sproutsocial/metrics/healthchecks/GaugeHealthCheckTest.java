@@ -1,17 +1,18 @@
 package com.sproutsocial.metrics.healthchecks;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
-
-import java.util.Optional;
-
+import com.codahale.metrics.Gauge;
+import com.codahale.metrics.health.HealthCheck;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import com.codahale.metrics.Gauge;
+import java.util.Optional;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
 
 /**
  * Created on 4/19/15
@@ -60,7 +61,10 @@ public class GaugeHealthCheckTest {
 
         healthCheck = HealthChecks.forDoubleGauge(doubleGauge, Optional.of(5d));
 
-        assertFalse(healthCheck.check().isHealthy());
+        HealthCheck.Result result = healthCheck.check();
+
+        assertFalse(result.isHealthy());
+        assertEquals("value=10.0&ceiling=5.0", result.getMessage());
     }
     
     @Test

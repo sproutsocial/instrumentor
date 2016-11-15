@@ -98,14 +98,14 @@ We'll get stats to track the percentage of method calls that are throwing except
 
 #### HealthCheck
 
-If you pass a `threshold` as the third argument, you'll get a `HealthCheck` that will monitor 
+If you pass an `errorThreshold` to instrumentor, you'll get a `HealthCheck` that will monitor 
 the percent of errors, and notify when the error rate exceeds the threshold.
 
 Assuming the threshold given is `0.1` i.e. ten percent, and there were 
 five errors in the last 100 calls, the healtcheck would report as "Healthy".
 
 If there were, however, twenty errors in the last 100 calls, the healthcheck
-would report as "Unhealthy", with a message of `"value=0.2&threshold=0.1"`
+would report as "Unhealthy", with a message of `"value=0.2&ceiling=0.1"`
 
 HealthChecks can by logged by interrogating the underlying `HealthCheckRegistry`.
 The Metrics documentation has a good guide for getting value out of HealthChecks [here](https://dropwizard.github.io/metrics/3.1.0/manual/healthchecks/).

@@ -1,11 +1,11 @@
 package com.sproutsocial.metrics.healthchecks;
 
-import java.util.Optional;
-import java.util.Set;
-
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.health.HealthCheck;
 import com.google.common.collect.ImmutableSet;
+
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * Created on 4/19/15
@@ -48,6 +48,6 @@ public class GaugeHealthCheck<T extends Comparable<T>> extends HealthCheck {
     }
 
     private String getUnhealthyMessage(T value) {
-        return "value=" + value + "&ceiling=" + ceiling;
+        return "value=" + value + "&ceiling=" + ceiling.get();
     }
 }
