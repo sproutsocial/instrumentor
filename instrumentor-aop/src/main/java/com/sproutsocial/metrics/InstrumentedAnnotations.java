@@ -1,10 +1,12 @@
 package com.sproutsocial.metrics;
 
+import java.lang.reflect.Method;
 import java.util.function.Predicate;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.inject.AbstractModule;
+import com.google.inject.matcher.AbstractMatcher;
 import com.google.inject.matcher.Matchers;
 
 /**
@@ -13,6 +15,24 @@ import com.google.inject.matcher.Matchers;
  * @author horthy
  */
 public class InstrumentedAnnotations extends AbstractModule {
+
+    /**
+     * This method matcher prevents errors such as
+     * ```
+     * Method [Object SomeClass.aMethod(Object)] is synthetic and is being
+     * intercepted by [InstrumentingInterceptor]. This could indicate a bug.
+     * The method may be intercepted twice, or may not be intercepted at all.
+     * ```
+     * It is largely taken from https://stackoverflow.com/a/23334307.
+     */
+    private static class NoSyntheticMethodMatcher extends AbstractMatcher<Method> {
+
+        @Override
+        public boolean matches(Method method) {
+            return !method.isSynthetic();
+        }
+
+    }
 
     private final MetricRegistry metricRegistry;
     private final HealthCheckRegistry healthCheckRegistry;
@@ -56,13 +76,17 @@ public class InstrumentedAnnotations extends AbstractModule {
 
         bindInterceptor(
                 Matchers.annotatedWith(Instrumented.class),
-                Matchers.not(Matchers.annotatedWith(Instrumented.class)), // in case of both, defer to method annotation
+                new NoSyntheticMethodMatcher().and(
+                    Matchers.not(Matchers.annotatedWith(Instrumented.class)) // in case of both, defer to method annotation
+                ),
                 InstrumentingInterceptor.ofClasses(instrumentor)
         );
 
         bindInterceptor(
                 Matchers.any(),
-                Matchers.annotatedWith(Instrumented.class),
+                new NoSyntheticMethodMatcher().and(
+                    Matchers.annotatedWith(Instrumented.class)
+                ),
                 InstrumentingInterceptor.ofMethods(instrumentor)
         );
 
