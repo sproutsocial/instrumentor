@@ -3,7 +3,7 @@
 
     <groupId>com.sproutsocial</groupId>
     <artifactId>instrumentor</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <packaging>pom</packaging>
     <name>Instrumentor</name>
     <description>Metrics toolkit for instrumentation</description>
@@ -26,6 +26,16 @@
         <developer>
             <name>David Huber</name>
             <email>dhuber@sproutsocial.com</email>
+            <timezone>America/Chicago</timezone>
+            <organization>Sprout Social, LLC</organization>
+            <organizationUrl>http://sproutsocial.com</organizationUrl>
+            <roles>
+                <role>maintainer</role>
+            </roles>
+        </developer>
+        <developer>
+            <name>Micah Bennett</name>
+            <email>micah@sproutsocial.com</email>
             <timezone>America/Chicago</timezone>
             <organization>Sprout Social, LLC</organization>
             <organizationUrl>http://sproutsocial.com</organizationUrl>
