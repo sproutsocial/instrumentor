@@ -2,7 +2,6 @@ package com.sproutsocial.metrics;
 
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Strings;
-import org.aopalliance.intercept.MethodInvocation;
 
 import java.lang.reflect.Method;
 
@@ -11,17 +10,14 @@ import java.lang.reflect.Method;
  */
 public interface InstrumentationDetails {
 
-    Instrumented getAnnotation(MethodInvocation methodInvocation);
+    Instrumented getAnnotation(Method method);
     String name(Method method, Instrumented annotation);
 
     class ClassInstrumentation implements InstrumentationDetails {
 
         @Override
-        public Instrumented getAnnotation(MethodInvocation methodInvocation) {
-            return methodInvocation
-                    .getMethod()
-                    .getDeclaringClass()
-                    .getAnnotation(Instrumented.class);
+        public Instrumented getAnnotation(Method method) {
+            return method.getDeclaringClass().getAnnotation(Instrumented.class);
         }
 
         @Override
@@ -31,19 +27,16 @@ public interface InstrumentationDetails {
 
             if (Strings.isNullOrEmpty(annotationName)) {
                 return Names.name(method);
-            } else {
-                return MetricRegistry.name(annotationName, method.getName());
             }
+            return MetricRegistry.name(annotationName, method.getName());
         }
     }
 
     class MethodInstrumentation implements InstrumentationDetails {
 
         @Override
-        public Instrumented getAnnotation(MethodInvocation methodInvocation) {
-            return methodInvocation
-                    .getMethod()
-                    .getDeclaredAnnotation(Instrumented.class);
+        public Instrumented getAnnotation(Method method) {
+            return method.getDeclaredAnnotation(Instrumented.class);
         }
 
         @Override
@@ -52,9 +45,8 @@ public interface InstrumentationDetails {
 
             if (Strings.isNullOrEmpty(annotationName)) {
                 return Names.name(method);
-            } else {
-                return annotationName;
             }
+            return annotationName;
         }
     }
 
