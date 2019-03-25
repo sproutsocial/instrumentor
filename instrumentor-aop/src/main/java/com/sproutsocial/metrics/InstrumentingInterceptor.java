@@ -12,7 +12,7 @@ import org.aopalliance.intercept.MethodInvocation;
  * @author horthy
  */
 public class InstrumentingInterceptor implements MethodInterceptor {
-    
+
     private final Instrumentor instrumentor;
     private final InstrumentationDetails instrumentationDetails;
 
@@ -41,7 +41,15 @@ public class InstrumentingInterceptor implements MethodInterceptor {
     @Override
     public Object invoke(MethodInvocation methodInvocation) throws Throwable {
         final Method method = methodInvocation.getMethod();
-        Instrumented declaredAnnotation = instrumentationDetails.getAnnotation(methodInvocation);
+        final Instrumented declaredAnnotation = instrumentationDetails.getAnnotation(method);
+        if (declaredAnnotation == null) {
+            // declaredAnnotation may be null, for example, when a class is @Instrumented, but it
+            // inherits from an interface with default methods. In that case,
+            // Method#getDeclaringClass will return the interface and not the implementing class. If
+            // that interface is not also annotated with @Instrumented, then
+            // instrumentationDetails#getAnnotation will return null.
+            return methodInvocation.proceed();
+        }
         final Optional<Double> threshold = getErrorThreshold(declaredAnnotation);
         final String name = instrumentationDetails.name(method, declaredAnnotation);
 
