@@ -12,7 +12,7 @@ import com.google.common.collect.ImmutableSet;
  *
  * A {@link HealthCheck} that reports healthy as long as the underlying
  * {@link Gauge}
- * has a value less than a ceiling value, or included in a whitelist.
+ * has a value less than a ceiling value, or included in a allowlist.
  *
  * @author horthy
  */
