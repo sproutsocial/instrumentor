@@ -8,18 +8,14 @@ import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.function.Predicate;
 
-/**
- * Created on 4/17/15
- *
- * @author horthy
- */
-public class Instrumentor extends BaseInstrumentor {
+public class ExtendedInstrumentor extends BaseInstrumentor{
 
-    public Instrumentor() {
+
+    public ExtendedInstrumentor() {
         this(new MetricRegistry(), new HealthCheckRegistry(), any -> true);
     }
 
-    public Instrumentor(
+    public ExtendedInstrumentor(
             MetricRegistry metricRegistry,
             HealthCheckRegistry healthCheckRegistry,
             Predicate<Throwable> exceptionFilter) {
@@ -30,21 +26,16 @@ public class Instrumentor extends BaseInstrumentor {
 //        return new Builder();
 //    }
 //
-//    public static class Builder extends BaseBuilder<Instrumentor, Builder> {
+//    public static class Builder extends BaseBuilder<ExtendedInstrumentor, Builder> {
 //
 //        @Override
-//        protected Instrumentor getInstrumentor() {
-//            return new Instrumentor();
+//        protected ExtendedInstrumentor getInstrumentor() {
+//            return new ExtendedInstrumentor();
 //        }
 //
 //        @Override
 //        protected Builder getBuilder() {
 //            return this;
-//        }
-//
-//        @Override
-//        protected Instrumentor build() {
-//            return new Instrumentor(builder.metricRegistry, builder.)
 //        }
 //    }
 
@@ -58,9 +49,12 @@ public class Instrumentor extends BaseInstrumentor {
         final InstrumentorContext context = createInstrumentationContext(name, errorThreshold);
 
         return () -> {
+            context.getTotalMeter().mark();
             context.getInflightCounter().inc();
-            try (@SuppressWarnings("unused") Timer.Context ctx = context.getTimer().time()) {
-                return callable.call();
+            try (@SuppressWarnings("unused") Timer.Context ctx = context.getTimer().time()){
+                T result = callable.call();
+                context.getSuccessMeter().mark();
+                return result;
             } catch (Exception e) {
                 if (exceptionFilter.test(e)) {
                     context.getErrorMeter().mark();
@@ -82,9 +76,12 @@ public class Instrumentor extends BaseInstrumentor {
         final InstrumentorContext context = createInstrumentationContext(name, errorThreshold);
 
         return () -> {
+            context.getTotalMeter().mark();
             context.getInflightCounter().inc();
-            try (@SuppressWarnings("unused") Timer.Context ctx = context.getTimer().time()) {
-                return callable.call();
+            try (@SuppressWarnings("unused") Timer.Context ctx = context.getTimer().time()){
+                T result = callable.call();
+                context.getSuccessMeter().mark();
+                return result;
             } catch (Throwable e) {
                 if (exceptionFilter.test(e)) {
                     context.getErrorMeter().mark();
@@ -106,9 +103,11 @@ public class Instrumentor extends BaseInstrumentor {
         final InstrumentorContext context = createInstrumentationContext(name, errorThreshold);
 
         return () -> {
+            context.getTotalMeter().mark();
             context.getInflightCounter().inc();
-            try (@SuppressWarnings("unused") Timer.Context ctx = context.getTimer().time()) {
+            try (@SuppressWarnings("unused") Timer.Context ctx = context.getTimer().time()){
                 runnable.run();
+                context.getSuccessMeter().mark();
             } catch (Exception e) {
                 if (exceptionFilter.test(e)) {
                     context.getErrorMeter().mark();
@@ -130,9 +129,11 @@ public class Instrumentor extends BaseInstrumentor {
         final InstrumentorContext context = createInstrumentationContext(name, errorThreshold);
 
         return () -> {
+            context.getTotalMeter().mark();
             context.getInflightCounter().inc();
-            try (@SuppressWarnings("unused") Timer.Context ctx = context.getTimer().time()) {
+            try (@SuppressWarnings("unused") Timer.Context ctx = context.getTimer().time()){
                 runnable.run();
+                context.getSuccessMeter().mark();
             } catch (Exception e) {
                 if (exceptionFilter.test(e)) {
                     context.getErrorMeter().mark();
@@ -146,7 +147,6 @@ public class Instrumentor extends BaseInstrumentor {
 
     @Override
     protected InstrumentorContext createInstrumentationContext(String name) {
-        return InstrumentorContext.buildDefaultInstrumentorContext(metricRegistry, name);
+        return InstrumentorContext.buildExtendedInstrumentorContext(metricRegistry, name);
     }
-
 }

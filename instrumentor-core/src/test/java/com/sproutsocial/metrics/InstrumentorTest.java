@@ -40,10 +40,7 @@ public class InstrumentorTest {
 
     @Before
     public void setUp() throws Exception {
-        instrumentor = Instrumentor.builder()
-                .metricRegistry(metricRegistry)
-                .healthCheckRegistry(healthCheckRegistry)
-                .build();
+        instrumentor = new Instrumentor(metricRegistry, healthCheckRegistry, any -> true);
     }
 
     @Test
