@@ -20,15 +20,12 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.health.HealthCheckRegistry;
 
-/**
- * Created on 4/18/15
- *
- * @author horthy
- */
 @RunWith(MockitoJUnitRunner.class)
 public class InstrumentorTest {
 
     public static final String NAME = "method";
+    private @Mock Meter totalMeter;
+    private @Mock Meter successMeter;
     private @Mock Meter errorMeter;
     private @Mock Timer timer;
     private @Mock Counter counter;
@@ -47,11 +44,8 @@ public class InstrumentorTest {
     }
 
     @Test
-    public void testRunnable() throws Exception {
-        when(metricRegistry.timer(NAME)).thenReturn(timer);
-        when(metricRegistry.meter(NAME + ".errors")).thenReturn(errorMeter);
-        when(metricRegistry.counter(NAME + ".inFlight")).thenReturn(counter);
-        when(timer.time()).thenReturn(context);
+    public void testRunnable_error() throws Exception {
+        initializeMetrics();
         Runnable runnable =  () -> { throw new RuntimeException();};
 
         try {
@@ -60,22 +54,38 @@ public class InstrumentorTest {
 
         assertTrue(healthCheckRegistry.getNames().contains(NAME));
 
-        InOrder inOrder = inOrder(errorMeter, context, counter);
-
-
+        InOrder inOrder = inOrder(totalMeter, successMeter, errorMeter, context, counter);
+        inOrder.verify(totalMeter, times(1)).mark();
         inOrder.verify(counter, times(1)).inc();
+        inOrder.verify(successMeter, times(0)).mark();
         inOrder.verify(context, times(1)).close();
         inOrder.verify(errorMeter, times(1)).mark();
         inOrder.verify(counter, times(1)).dec();
-
     }
 
     @Test
-    public void testCheckedRunnable() throws Exception {
-        when(metricRegistry.timer(NAME)).thenReturn(timer);
-        when(metricRegistry.meter(NAME + ".errors")).thenReturn(errorMeter);
-        when(metricRegistry.counter(NAME + ".inFlight")).thenReturn(counter);
-        when(timer.time()).thenReturn(context);
+    public void testRunnable_success() throws Exception {
+        initializeMetrics();
+        Runnable runnable =  () -> {};
+
+        try {
+            instrumentor.instrumenting(runnable, NAME, 0.1).run();
+        } catch (RuntimeException ignored) {}
+
+        assertTrue(healthCheckRegistry.getNames().contains(NAME));
+
+        InOrder inOrder = inOrder(totalMeter, successMeter, errorMeter, context, counter);
+        inOrder.verify(totalMeter, times(1)).mark();
+        inOrder.verify(counter, times(1)).inc();
+        inOrder.verify(successMeter, times(1)).mark();
+        inOrder.verify(context, times(1)).close();
+        inOrder.verify(errorMeter, times(0)).mark();
+        inOrder.verify(counter, times(1)).dec();
+    }
+
+    @Test
+    public void testCheckedRunnable_error() throws Exception {
+        initializeMetrics();
         CheckedRunnable runnable =  () -> { throw new Exception();};
 
 
@@ -86,19 +96,40 @@ public class InstrumentorTest {
         assertTrue(healthCheckRegistry.getNames().contains(NAME));
 
 
-        final InOrder inOrder = inOrder(counter, errorMeter, context);
+        final InOrder inOrder = inOrder(totalMeter, successMeter, counter, errorMeter, context);
+        inOrder.verify(totalMeter, times(1)).mark();
         inOrder.verify(counter, times(1)).inc();
+        inOrder.verify(successMeter, times(0)).mark();
         inOrder.verify(context, times(1)).close();
         inOrder.verify(errorMeter, times(1)).mark();
         inOrder.verify(counter, times(1)).dec();
     }
 
     @Test
-    public void testCallable() throws Exception {
-        when(metricRegistry.timer(NAME)).thenReturn(timer);
-        when(metricRegistry.meter(NAME + ".errors")).thenReturn(errorMeter);
-        when(metricRegistry.counter(NAME + ".inFlight")).thenReturn(counter);
-        when(timer.time()).thenReturn(context);
+    public void testCheckedRunnable_success() throws Exception {
+        initializeMetrics();
+        CheckedRunnable runnable =  () -> {};
+
+
+        try {
+            instrumentor.runChecked(runnable, NAME, 0.1);
+        } catch (Exception ignored) {}
+
+        assertTrue(healthCheckRegistry.getNames().contains(NAME));
+
+
+        final InOrder inOrder = inOrder(totalMeter, successMeter, counter, errorMeter, context);
+        inOrder.verify(totalMeter, times(1)).mark();
+        inOrder.verify(counter, times(1)).inc();
+        inOrder.verify(successMeter, times(1)).mark();
+        inOrder.verify(context, times(1)).close();
+        inOrder.verify(errorMeter, times(0)).mark();
+        inOrder.verify(counter, times(1)).dec();
+    }
+
+    @Test
+    public void testCallable_error() throws Exception {
+        initializeMetrics();
         Callable<Void> callable =  () -> { throw new Exception();};
 
 
@@ -109,19 +140,40 @@ public class InstrumentorTest {
         assertTrue(healthCheckRegistry.getNames().contains(NAME));
 
 
-        final InOrder inOrder = inOrder(counter, errorMeter, context);
+        final InOrder inOrder = inOrder(totalMeter, successMeter, counter, errorMeter, context);
+        inOrder.verify(totalMeter, times(1)).mark();
         inOrder.verify(counter, times(1)).inc();
+        inOrder.verify(successMeter, times(0)).mark();
         inOrder.verify(context, times(1)).close();
         inOrder.verify(errorMeter, times(1)).mark();
         inOrder.verify(counter, times(1)).dec();
     }
 
     @Test
-    public void testCheckedCallable() throws Exception {
-        when(metricRegistry.timer(NAME)).thenReturn(timer);
-        when(metricRegistry.meter(NAME + ".errors")).thenReturn(errorMeter);
-        when(metricRegistry.counter(NAME + ".inFlight")).thenReturn(counter);
-        when(timer.time()).thenReturn(context);
+    public void testCallable_success() throws Exception {
+        initializeMetrics();
+        Callable<Void> callable =  () -> null;
+
+
+        try {
+            instrumentor.call(callable, NAME, 0.1);
+        } catch (Exception ignored) {}
+
+        assertTrue(healthCheckRegistry.getNames().contains(NAME));
+
+
+        final InOrder inOrder = inOrder(totalMeter, successMeter, counter, errorMeter, context);
+        inOrder.verify(totalMeter, times(1)).mark();
+        inOrder.verify(counter, times(1)).inc();
+        inOrder.verify(successMeter, times(1)).mark();
+        inOrder.verify(context, times(1)).close();
+        inOrder.verify(errorMeter, times(0)).mark();
+        inOrder.verify(counter, times(1)).dec();
+    }
+
+    @Test
+    public void testCheckedCallable_error() throws Exception {
+        initializeMetrics();
         Callable<Void> callable =  () -> { throw new Exception();};
 
 
@@ -132,19 +184,40 @@ public class InstrumentorTest {
         assertTrue(healthCheckRegistry.getNames().contains(NAME));
 
 
-        final InOrder inOrder = inOrder(counter, errorMeter, context);
+        final InOrder inOrder = inOrder(totalMeter, successMeter, counter, errorMeter, context);
+        inOrder.verify(totalMeter, times(1)).mark();
         inOrder.verify(counter, times(1)).inc();
+        inOrder.verify(successMeter, times(0)).mark();
         inOrder.verify(context, times(1)).close();
         inOrder.verify(errorMeter, times(1)).mark();
         inOrder.verify(counter, times(1)).dec();
     }
 
     @Test
-    public void testCallThrowably() throws Exception {
-        when(metricRegistry.timer(NAME)).thenReturn(timer);
-        when(metricRegistry.meter(NAME + ".errors")).thenReturn(errorMeter);
-        when(metricRegistry.counter(NAME + ".inFlight")).thenReturn(counter);
-        when(timer.time()).thenReturn(context);
+    public void testCheckedCallable_success() throws Exception {
+        initializeMetrics();
+        Callable<Void> callable =  () -> null;
+
+
+        try {
+            instrumentor.callChecked(callable, NAME, 0.1);
+        } catch (Exception ignored) {}
+
+        assertTrue(healthCheckRegistry.getNames().contains(NAME));
+
+
+        final InOrder inOrder = inOrder(totalMeter, successMeter, counter, errorMeter, context);
+        inOrder.verify(totalMeter, times(1)).mark();
+        inOrder.verify(counter, times(1)).inc();
+        inOrder.verify(successMeter, times(1)).mark();
+        inOrder.verify(context, times(1)).close();
+        inOrder.verify(errorMeter, times(0)).mark();
+        inOrder.verify(counter, times(1)).dec();
+    }
+
+    @Test
+    public void testCallThrowably_error() throws Exception {
+        initializeMetrics();
         ThrowableCallable<Void> callable =  () -> { throw new Throwable();};
 
 
@@ -155,10 +228,43 @@ public class InstrumentorTest {
         assertTrue(healthCheckRegistry.getNames().contains(NAME));
 
 
-        final InOrder inOrder = inOrder(counter, errorMeter, context);
+        final InOrder inOrder = inOrder(totalMeter, successMeter, counter, errorMeter, context);
+        inOrder.verify(totalMeter, times(1)).mark();
         inOrder.verify(counter, times(1)).inc();
+        inOrder.verify(successMeter, times(0)).mark();
         inOrder.verify(context, times(1)).close();
         inOrder.verify(errorMeter, times(1)).mark();
         inOrder.verify(counter, times(1)).dec();
+    }
+
+    @Test
+    public void testCallThrowably_success() throws Exception {
+        initializeMetrics();
+        ThrowableCallable<Void> callable =  () -> null;
+
+
+        try {
+            instrumentor.callThrowably(callable, NAME, 0.1);
+        } catch (Throwable ignored) {}
+
+        assertTrue(healthCheckRegistry.getNames().contains(NAME));
+
+
+        final InOrder inOrder = inOrder(totalMeter, successMeter, counter, errorMeter, context);
+        inOrder.verify(totalMeter, times(1)).mark();
+        inOrder.verify(counter, times(1)).inc();
+        inOrder.verify(successMeter, times(1)).mark();
+        inOrder.verify(context, times(1)).close();
+        inOrder.verify(errorMeter, times(0)).mark();
+        inOrder.verify(counter, times(1)).dec();
+    }
+
+    private void initializeMetrics() {
+        when(metricRegistry.timer(NAME)).thenReturn(timer);
+        when(metricRegistry.meter(NAME + ".total")).thenReturn(totalMeter);
+        when(metricRegistry.meter(NAME + ".success")).thenReturn(successMeter);
+        when(metricRegistry.meter(NAME + ".errors")).thenReturn(errorMeter);
+        when(metricRegistry.counter(NAME + ".inFlight")).thenReturn(counter);
+        when(timer.time()).thenReturn(context);
     }
 }

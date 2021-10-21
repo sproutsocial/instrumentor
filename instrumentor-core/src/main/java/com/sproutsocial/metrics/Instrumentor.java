@@ -16,11 +16,6 @@ import com.google.common.base.Throwables;
 import com.sproutsocial.metrics.gauges.Gauges;
 import com.sproutsocial.metrics.healthchecks.HealthChecks;
 
-/**
- * Created on 4/17/15
- *
- * @author horthy
- */
 public class Instrumentor {
 
     /* package */ static final double NO_THRESHOLD_DEFINED = -1d;
@@ -31,11 +26,15 @@ public class Instrumentor {
 
 
     private class Context {
+        private Meter totalMeter;
+        private Meter successMeter;
         private Meter errorMeter;
         private Timer timer;
         private Counter inFlight;
 
         Context(String name) {
+            totalMeter = metricRegistry.meter(name + ".total");
+            successMeter = metricRegistry.meter(name + ".success");
             errorMeter = metricRegistry.meter(name + ".errors");
             timer = metricRegistry.timer(name);
             inFlight = metricRegistry.counter(name + ".inFlight");
@@ -109,9 +108,12 @@ public class Instrumentor {
         final Context context = createInstrumentationContext(name, errorThreshold);
 
         return () -> {
+            context.totalMeter.mark();
             context.inFlight.inc();
             try (@SuppressWarnings("unused") Timer.Context ctx = context.timer.time()){
-                return callable.call();
+                T result = callable.call();
+                context.successMeter.mark();
+                return result;
             } catch (Exception e) {
                 if (exceptionFilter.test(e)) {
                     context.errorMeter.mark();
@@ -132,9 +134,12 @@ public class Instrumentor {
         final Context context = createInstrumentationContext(name, errorThreshold);
 
         return () -> {
+            context.totalMeter.mark();
             context.inFlight.inc();
             try (@SuppressWarnings("unused") Timer.Context ctx = context.timer.time()){
-                return callable.call();
+                T result = callable.call();
+                context.successMeter.mark();
+                return result;
             } catch (Throwable e) {
                 if (exceptionFilter.test(e)) {
                     context.errorMeter.mark();
@@ -155,9 +160,11 @@ public class Instrumentor {
         final Context context = createInstrumentationContext(name, errorThreshold);
 
         return () -> {
+            context.totalMeter.mark();
             context.inFlight.inc();
             try (@SuppressWarnings("unused") Timer.Context ctx = context.timer.time()){
                 runnable.run();
+                context.successMeter.mark();
             } catch (Exception e) {
                 if (exceptionFilter.test(e)) {
                     context.errorMeter.mark();
@@ -178,9 +185,11 @@ public class Instrumentor {
         final Context context = createInstrumentationContext(name, errorThreshold);
 
         return () -> {
+            context.totalMeter.mark();
             context.inFlight.inc();
             try (@SuppressWarnings("unused") Timer.Context ctx = context.timer.time()){
                 runnable.run();
+                context.successMeter.mark();
             } catch (Exception e) {
                 if (exceptionFilter.test(e)) {
                     context.errorMeter.mark();
