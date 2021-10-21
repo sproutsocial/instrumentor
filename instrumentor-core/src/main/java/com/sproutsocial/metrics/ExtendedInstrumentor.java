@@ -10,7 +10,6 @@ import java.util.function.Predicate;
 
 public class ExtendedInstrumentor extends BaseInstrumentor{
 
-
     public ExtendedInstrumentor() {
         this(new MetricRegistry(), new HealthCheckRegistry(), any -> true);
     }
@@ -21,23 +20,6 @@ public class ExtendedInstrumentor extends BaseInstrumentor{
             Predicate<Throwable> exceptionFilter) {
         super(metricRegistry, healthCheckRegistry, exceptionFilter);
     }
-
-//    public static Builder builder() {
-//        return new Builder();
-//    }
-//
-//    public static class Builder extends BaseBuilder<ExtendedInstrumentor, Builder> {
-//
-//        @Override
-//        protected ExtendedInstrumentor getInstrumentor() {
-//            return new ExtendedInstrumentor();
-//        }
-//
-//        @Override
-//        protected Builder getBuilder() {
-//            return this;
-//        }
-//    }
 
     @Override
     protected <T> Callable<T> instrumenting(

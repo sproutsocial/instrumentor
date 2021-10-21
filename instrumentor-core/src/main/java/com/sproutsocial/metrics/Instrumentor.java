@@ -8,11 +8,6 @@ import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.function.Predicate;
 
-/**
- * Created on 4/17/15
- *
- * @author horthy
- */
 public class Instrumentor extends BaseInstrumentor {
 
     public Instrumentor() {
@@ -25,28 +20,6 @@ public class Instrumentor extends BaseInstrumentor {
             Predicate<Throwable> exceptionFilter) {
         super(metricRegistry, healthCheckRegistry, exceptionFilter);
     }
-
-//    public static Builder builder() {
-//        return new Builder();
-//    }
-//
-//    public static class Builder extends BaseBuilder<Instrumentor, Builder> {
-//
-//        @Override
-//        protected Instrumentor getInstrumentor() {
-//            return new Instrumentor();
-//        }
-//
-//        @Override
-//        protected Builder getBuilder() {
-//            return this;
-//        }
-//
-//        @Override
-//        protected Instrumentor build() {
-//            return new Instrumentor(builder.metricRegistry, builder.)
-//        }
-//    }
 
     @Override
     protected <T> Callable<T> instrumenting(
@@ -148,5 +121,4 @@ public class Instrumentor extends BaseInstrumentor {
     protected InstrumentorContext createInstrumentationContext(String name) {
         return InstrumentorContext.buildDefaultInstrumentorContext(metricRegistry, name);
     }
-
 }
