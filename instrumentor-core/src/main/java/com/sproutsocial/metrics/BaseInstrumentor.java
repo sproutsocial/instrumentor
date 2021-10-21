@@ -65,10 +65,10 @@ public abstract class BaseInstrumentor {
             Optional<Double> errorThreshold
     );
 
-    protected abstract InstrumentorContext createInstrumentationContext(String name);
+    protected abstract InstrumentorContext getInstrumentatorContext(String name);
 
     protected InstrumentorContext createInstrumentationContext(String name, Optional<Double> errorThreshold) {
-        final InstrumentorContext context = createInstrumentationContext(name);
+        final InstrumentorContext context = getInstrumentatorContext(name);
         if (!errorGaugesExist(name)) {
             registerErrorGauges(name, context.getErrorMeter(), context.getTimer());
         }

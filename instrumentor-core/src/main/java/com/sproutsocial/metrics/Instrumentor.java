@@ -118,7 +118,7 @@ public class Instrumentor extends BaseInstrumentor {
     }
 
     @Override
-    protected InstrumentorContext createInstrumentationContext(String name) {
+    protected InstrumentorContext getInstrumentatorContext(String name) {
         return InstrumentorContext.buildDefaultInstrumentorContext(metricRegistry, name);
     }
 }
