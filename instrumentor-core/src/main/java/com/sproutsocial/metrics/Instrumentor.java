@@ -25,14 +25,14 @@ public class Instrumentor {
     private final Predicate<Throwable> exceptionFilter;
 
 
-    private class Context {
+    private class InstrumentationContext {
         private Meter totalMeter;
         private Meter successMeter;
         private Meter errorMeter;
         private Timer timer;
         private Counter inFlight;
 
-        Context(String name) {
+        InstrumentationContext(String name) {
             totalMeter = metricRegistry.meter(name + ".totalStarted");
             successMeter = metricRegistry.meter(name + ".success");
             errorMeter = metricRegistry.meter(name + ".errors");
@@ -105,23 +105,23 @@ public class Instrumentor {
             Optional<Double> errorThreshold
     ) {
 
-        final Context context = createInstrumentationContext(name, errorThreshold);
+        final InstrumentationContext instrumentationContext = createInstrumentationContext(name, errorThreshold);
 
         return () -> {
-            context.totalMeter.mark();
-            context.inFlight.inc();
+            instrumentationContext.totalMeter.mark();
+            instrumentationContext.inFlight.inc();
             T result;
-            try (@SuppressWarnings("unused") Timer.Context ctx = context.timer.time()){
+            try (@SuppressWarnings("unused") Timer.Context timerContext = instrumentationContext.timer.time()){
                 result = callable.call();
             } catch (Exception e) {
                 if (exceptionFilter.test(e)) {
-                    context.errorMeter.mark();
+                    instrumentationContext.errorMeter.mark();
                 }
                 throw e;
             } finally {
-                context.inFlight.dec();
+                instrumentationContext.inFlight.dec();
             }
-            context.successMeter.mark();
+            instrumentationContext.successMeter.mark();
             return result;
         };
     }
@@ -132,23 +132,23 @@ public class Instrumentor {
             Optional<Double> errorThreshold
     ) {
 
-        final Context context = createInstrumentationContext(name, errorThreshold);
+        final InstrumentationContext instrumentationContext = createInstrumentationContext(name, errorThreshold);
 
         return () -> {
-            context.totalMeter.mark();
-            context.inFlight.inc();
+            instrumentationContext.totalMeter.mark();
+            instrumentationContext.inFlight.inc();
             T result;
-            try (@SuppressWarnings("unused") Timer.Context ctx = context.timer.time()){
+            try (@SuppressWarnings("unused") Timer.Context timerContext = instrumentationContext.timer.time()){
                 result = callable.call();
             } catch (Throwable e) {
                 if (exceptionFilter.test(e)) {
-                    context.errorMeter.mark();
+                    instrumentationContext.errorMeter.mark();
                 }
                 throw e;
             } finally {
-                context.inFlight.dec();
+                instrumentationContext.inFlight.dec();
             }
-            context.successMeter.mark();
+            instrumentationContext.successMeter.mark();
             return result;
         };
     }
@@ -159,22 +159,22 @@ public class Instrumentor {
             Optional<Double> errorThreshold
     ) {
 
-        final Context context = createInstrumentationContext(name, errorThreshold);
+        final InstrumentationContext instrumentationContext = createInstrumentationContext(name, errorThreshold);
 
         return () -> {
-            context.totalMeter.mark();
-            context.inFlight.inc();
-            try (@SuppressWarnings("unused") Timer.Context ctx = context.timer.time()){
+            instrumentationContext.totalMeter.mark();
+            instrumentationContext.inFlight.inc();
+            try (@SuppressWarnings("unused") Timer.Context timerContext = instrumentationContext.timer.time()){
                 runnable.run();
             } catch (Exception e) {
                 if (exceptionFilter.test(e)) {
-                    context.errorMeter.mark();
+                    instrumentationContext.errorMeter.mark();
                 }
                 throw e;
             } finally {
-                context.inFlight.dec();
+                instrumentationContext.inFlight.dec();
             }
-            context.successMeter.mark();
+            instrumentationContext.successMeter.mark();
         };
     }
 
@@ -184,35 +184,35 @@ public class Instrumentor {
             Optional<Double> errorThreshold
     ) {
 
-        final Context context = createInstrumentationContext(name, errorThreshold);
+        final InstrumentationContext instrumentationContext = createInstrumentationContext(name, errorThreshold);
 
         return () -> {
-            context.totalMeter.mark();
-            context.inFlight.inc();
-            try (@SuppressWarnings("unused") Timer.Context ctx = context.timer.time()){
+            instrumentationContext.totalMeter.mark();
+            instrumentationContext.inFlight.inc();
+            try (@SuppressWarnings("unused") Timer.Context timerContext = instrumentationContext.timer.time()){
                 runnable.run();
             } catch (Exception e) {
                 if (exceptionFilter.test(e)) {
-                    context.errorMeter.mark();
+                    instrumentationContext.errorMeter.mark();
                 }
                 throw e;
             } finally {
-                context.inFlight.dec();
+                instrumentationContext.inFlight.dec();
             }
-            context.successMeter.mark();
+            instrumentationContext.successMeter.mark();
         };
     }
 
-    private Context createInstrumentationContext(String name, Optional<Double> errorThreshold) {
-        final Context context = new Context(name);
+    private InstrumentationContext createInstrumentationContext(String name, Optional<Double> errorThreshold) {
+        final InstrumentationContext instrumentationContext = new InstrumentationContext(name);
         if (!errorGaugesExist(name)) {
-            registerErrorGauges(name, context.errorMeter, context.timer);
+            registerErrorGauges(name, instrumentationContext.errorMeter, instrumentationContext.timer);
         }
 
         if (shouldRegisterHealthCheck(name, errorThreshold)) {
-            registerHealthCheck(name, errorThreshold, context.errorMeter, context.timer);
+            registerHealthCheck(name, errorThreshold, instrumentationContext.errorMeter, instrumentationContext.timer);
         }
-        return context;
+        return instrumentationContext;
     }
 
     private <T> boolean shouldRegisterHealthCheck(String name, Optional<T> ceiling) {
