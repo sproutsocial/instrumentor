@@ -57,10 +57,10 @@ public class InstrumentorTest {
         InOrder inOrder = inOrder(totalMeter, successMeter, errorMeter, context, counter);
         inOrder.verify(totalMeter, times(1)).mark();
         inOrder.verify(counter, times(1)).inc();
-        inOrder.verify(successMeter, times(0)).mark();
         inOrder.verify(context, times(1)).close();
         inOrder.verify(errorMeter, times(1)).mark();
         inOrder.verify(counter, times(1)).dec();
+        inOrder.verify(successMeter, times(0)).mark();
     }
 
     @Test
@@ -77,10 +77,10 @@ public class InstrumentorTest {
         InOrder inOrder = inOrder(totalMeter, successMeter, errorMeter, context, counter);
         inOrder.verify(totalMeter, times(1)).mark();
         inOrder.verify(counter, times(1)).inc();
-        inOrder.verify(successMeter, times(1)).mark();
         inOrder.verify(context, times(1)).close();
         inOrder.verify(errorMeter, times(0)).mark();
         inOrder.verify(counter, times(1)).dec();
+        inOrder.verify(successMeter, times(1)).mark();
     }
 
     @Test
@@ -99,10 +99,10 @@ public class InstrumentorTest {
         final InOrder inOrder = inOrder(totalMeter, successMeter, counter, errorMeter, context);
         inOrder.verify(totalMeter, times(1)).mark();
         inOrder.verify(counter, times(1)).inc();
-        inOrder.verify(successMeter, times(0)).mark();
         inOrder.verify(context, times(1)).close();
         inOrder.verify(errorMeter, times(1)).mark();
         inOrder.verify(counter, times(1)).dec();
+        inOrder.verify(successMeter, times(0)).mark();
     }
 
     @Test
@@ -121,10 +121,10 @@ public class InstrumentorTest {
         final InOrder inOrder = inOrder(totalMeter, successMeter, counter, errorMeter, context);
         inOrder.verify(totalMeter, times(1)).mark();
         inOrder.verify(counter, times(1)).inc();
-        inOrder.verify(successMeter, times(1)).mark();
         inOrder.verify(context, times(1)).close();
         inOrder.verify(errorMeter, times(0)).mark();
         inOrder.verify(counter, times(1)).dec();
+        inOrder.verify(successMeter, times(1)).mark();
     }
 
     @Test
@@ -143,10 +143,10 @@ public class InstrumentorTest {
         final InOrder inOrder = inOrder(totalMeter, successMeter, counter, errorMeter, context);
         inOrder.verify(totalMeter, times(1)).mark();
         inOrder.verify(counter, times(1)).inc();
-        inOrder.verify(successMeter, times(0)).mark();
         inOrder.verify(context, times(1)).close();
         inOrder.verify(errorMeter, times(1)).mark();
         inOrder.verify(counter, times(1)).dec();
+        inOrder.verify(successMeter, times(0)).mark();
     }
 
     @Test
@@ -165,10 +165,10 @@ public class InstrumentorTest {
         final InOrder inOrder = inOrder(totalMeter, successMeter, counter, errorMeter, context);
         inOrder.verify(totalMeter, times(1)).mark();
         inOrder.verify(counter, times(1)).inc();
-        inOrder.verify(successMeter, times(1)).mark();
         inOrder.verify(context, times(1)).close();
         inOrder.verify(errorMeter, times(0)).mark();
         inOrder.verify(counter, times(1)).dec();
+        inOrder.verify(successMeter, times(1)).mark();
     }
 
     @Test
@@ -187,10 +187,10 @@ public class InstrumentorTest {
         final InOrder inOrder = inOrder(totalMeter, successMeter, counter, errorMeter, context);
         inOrder.verify(totalMeter, times(1)).mark();
         inOrder.verify(counter, times(1)).inc();
-        inOrder.verify(successMeter, times(0)).mark();
         inOrder.verify(context, times(1)).close();
         inOrder.verify(errorMeter, times(1)).mark();
         inOrder.verify(counter, times(1)).dec();
+        inOrder.verify(successMeter, times(0)).mark();
     }
 
     @Test
@@ -209,10 +209,10 @@ public class InstrumentorTest {
         final InOrder inOrder = inOrder(totalMeter, successMeter, counter, errorMeter, context);
         inOrder.verify(totalMeter, times(1)).mark();
         inOrder.verify(counter, times(1)).inc();
-        inOrder.verify(successMeter, times(1)).mark();
         inOrder.verify(context, times(1)).close();
         inOrder.verify(errorMeter, times(0)).mark();
         inOrder.verify(counter, times(1)).dec();
+        inOrder.verify(successMeter, times(1)).mark();
     }
 
     @Test
@@ -231,10 +231,10 @@ public class InstrumentorTest {
         final InOrder inOrder = inOrder(totalMeter, successMeter, counter, errorMeter, context);
         inOrder.verify(totalMeter, times(1)).mark();
         inOrder.verify(counter, times(1)).inc();
-        inOrder.verify(successMeter, times(0)).mark();
         inOrder.verify(context, times(1)).close();
         inOrder.verify(errorMeter, times(1)).mark();
         inOrder.verify(counter, times(1)).dec();
+        inOrder.verify(successMeter, times(0)).mark();
     }
 
     @Test
@@ -253,10 +253,10 @@ public class InstrumentorTest {
         final InOrder inOrder = inOrder(totalMeter, successMeter, counter, errorMeter, context);
         inOrder.verify(totalMeter, times(1)).mark();
         inOrder.verify(counter, times(1)).inc();
-        inOrder.verify(successMeter, times(1)).mark();
         inOrder.verify(context, times(1)).close();
         inOrder.verify(errorMeter, times(0)).mark();
         inOrder.verify(counter, times(1)).dec();
+        inOrder.verify(successMeter, times(1)).mark();
     }
 
     private void initializeMetrics() {

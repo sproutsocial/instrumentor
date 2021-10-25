@@ -110,10 +110,9 @@ public class Instrumentor {
         return () -> {
             context.totalMeter.mark();
             context.inFlight.inc();
+            T result;
             try (@SuppressWarnings("unused") Timer.Context ctx = context.timer.time()){
-                T result = callable.call();
-                context.successMeter.mark();
-                return result;
+                result = callable.call();
             } catch (Exception e) {
                 if (exceptionFilter.test(e)) {
                     context.errorMeter.mark();
@@ -122,6 +121,8 @@ public class Instrumentor {
             } finally {
                 context.inFlight.dec();
             }
+            context.successMeter.mark();
+            return result;
         };
     }
 
@@ -136,10 +137,9 @@ public class Instrumentor {
         return () -> {
             context.totalMeter.mark();
             context.inFlight.inc();
+            T result;
             try (@SuppressWarnings("unused") Timer.Context ctx = context.timer.time()){
-                T result = callable.call();
-                context.successMeter.mark();
-                return result;
+                result = callable.call();
             } catch (Throwable e) {
                 if (exceptionFilter.test(e)) {
                     context.errorMeter.mark();
@@ -148,6 +148,8 @@ public class Instrumentor {
             } finally {
                 context.inFlight.dec();
             }
+            context.successMeter.mark();
+            return result;
         };
     }
 
@@ -164,7 +166,6 @@ public class Instrumentor {
             context.inFlight.inc();
             try (@SuppressWarnings("unused") Timer.Context ctx = context.timer.time()){
                 runnable.run();
-                context.successMeter.mark();
             } catch (Exception e) {
                 if (exceptionFilter.test(e)) {
                     context.errorMeter.mark();
@@ -173,6 +174,7 @@ public class Instrumentor {
             } finally {
                 context.inFlight.dec();
             }
+            context.successMeter.mark();
         };
     }
 
@@ -189,7 +191,6 @@ public class Instrumentor {
             context.inFlight.inc();
             try (@SuppressWarnings("unused") Timer.Context ctx = context.timer.time()){
                 runnable.run();
-                context.successMeter.mark();
             } catch (Exception e) {
                 if (exceptionFilter.test(e)) {
                     context.errorMeter.mark();
@@ -198,6 +199,7 @@ public class Instrumentor {
             } finally {
                 context.inFlight.dec();
             }
+            context.successMeter.mark();
         };
     }
 
