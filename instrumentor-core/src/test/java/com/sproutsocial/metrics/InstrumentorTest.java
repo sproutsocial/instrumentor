@@ -261,7 +261,7 @@ public class InstrumentorTest {
 
     private void initializeMetrics() {
         when(metricRegistry.timer(NAME)).thenReturn(timer);
-        when(metricRegistry.meter(NAME + ".total")).thenReturn(totalMeter);
+        when(metricRegistry.meter(NAME + ".totalStarted")).thenReturn(totalMeter);
         when(metricRegistry.meter(NAME + ".success")).thenReturn(successMeter);
         when(metricRegistry.meter(NAME + ".errors")).thenReturn(errorMeter);
         when(metricRegistry.counter(NAME + ".inFlight")).thenReturn(counter);

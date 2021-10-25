@@ -33,7 +33,7 @@ public class Instrumentor {
         private Counter inFlight;
 
         Context(String name) {
-            totalMeter = metricRegistry.meter(name + ".total");
+            totalMeter = metricRegistry.meter(name + ".totalStarted");
             successMeter = metricRegistry.meter(name + ".success");
             errorMeter = metricRegistry.meter(name + ".errors");
             timer = metricRegistry.timer(name);
