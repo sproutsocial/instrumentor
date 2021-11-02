@@ -23,6 +23,7 @@ In general, an instrumented method will report
 - call rate
 - timing
 - error rate
+- success rate
 
 Assuming we have the class
 
@@ -95,6 +96,27 @@ We'll get stats to track the percentage of method calls that are throwing except
 * `com.mycompany.Example.sayHello.errors.m1_pct` -- percent of errors over the last 1 minute
 * `com.mycompany.Example.sayHello.errors.m5_pct` -- percent of errors over the last 5 minutes
 * `com.mycompany.Example.sayHello.errors.m15_pct` -- percent of errors over the last 15 minutes
+
+
+#### Success Rate
+
+We'll get stats to track the rate at which the method succeeds
+
+* `com.mycompany.Example.sayHello.success.count` -- a lifetime count of successes
+* `com.mycompany.Example.sayHello.success.mean_rate` -- mean rate of successes
+* `com.mycompany.Example.sayHello.success.m1_rate` -- rate of successes over the last 1 minute
+* `com.mycompany.Example.sayHello.success.m5_rate` -- rate of successes over the last 5 minutes
+* `com.mycompany.Example.sayHello.success.m15_rate` -- rate of successes over the last 15 minutes
+
+#### Percent Success Rate
+
+We'll get stats to track the percentage of method succeeds
+
+* `com.mycompany.Example.sayHello.success.total_pct` -- a lifetime percent of successes
+* `com.mycompany.Example.sayHello.success.mean_pct` -- mean percent of successes
+* `com.mycompany.Example.sayHello.success.m1_pct` -- percent of successes over the last 1 minute
+* `com.mycompany.Example.sayHello.success.m5_pct` -- percent of successes over the last 5 minutes
+* `com.mycompany.Example.sayHello.success.m15_pct` -- percent of successes over the last 15 minutes
 
 #### HealthCheck
 
