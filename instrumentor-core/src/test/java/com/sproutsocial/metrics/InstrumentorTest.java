@@ -24,7 +24,6 @@ import com.codahale.metrics.health.HealthCheckRegistry;
 public class InstrumentorTest {
 
     public static final String NAME = "method";
-    private @Mock Meter totalMeter;
     private @Mock Meter successMeter;
     private @Mock Meter errorMeter;
     private @Mock Timer timer;
@@ -54,8 +53,7 @@ public class InstrumentorTest {
 
         assertTrue(healthCheckRegistry.getNames().contains(NAME));
 
-        InOrder inOrder = inOrder(totalMeter, successMeter, errorMeter, context, counter);
-        inOrder.verify(totalMeter, times(1)).mark();
+        InOrder inOrder = inOrder(successMeter, errorMeter, context, counter);
         inOrder.verify(counter, times(1)).inc();
         inOrder.verify(context, times(1)).close();
         inOrder.verify(errorMeter, times(1)).mark();
@@ -74,8 +72,7 @@ public class InstrumentorTest {
 
         assertTrue(healthCheckRegistry.getNames().contains(NAME));
 
-        InOrder inOrder = inOrder(totalMeter, successMeter, errorMeter, context, counter);
-        inOrder.verify(totalMeter, times(1)).mark();
+        InOrder inOrder = inOrder(successMeter, errorMeter, context, counter);
         inOrder.verify(counter, times(1)).inc();
         inOrder.verify(context, times(1)).close();
         inOrder.verify(errorMeter, times(0)).mark();
@@ -96,8 +93,7 @@ public class InstrumentorTest {
         assertTrue(healthCheckRegistry.getNames().contains(NAME));
 
 
-        final InOrder inOrder = inOrder(totalMeter, successMeter, counter, errorMeter, context);
-        inOrder.verify(totalMeter, times(1)).mark();
+        final InOrder inOrder = inOrder(successMeter, counter, errorMeter, context);
         inOrder.verify(counter, times(1)).inc();
         inOrder.verify(context, times(1)).close();
         inOrder.verify(errorMeter, times(1)).mark();
@@ -118,8 +114,7 @@ public class InstrumentorTest {
         assertTrue(healthCheckRegistry.getNames().contains(NAME));
 
 
-        final InOrder inOrder = inOrder(totalMeter, successMeter, counter, errorMeter, context);
-        inOrder.verify(totalMeter, times(1)).mark();
+        final InOrder inOrder = inOrder(successMeter, counter, errorMeter, context);
         inOrder.verify(counter, times(1)).inc();
         inOrder.verify(context, times(1)).close();
         inOrder.verify(errorMeter, times(0)).mark();
@@ -140,8 +135,7 @@ public class InstrumentorTest {
         assertTrue(healthCheckRegistry.getNames().contains(NAME));
 
 
-        final InOrder inOrder = inOrder(totalMeter, successMeter, counter, errorMeter, context);
-        inOrder.verify(totalMeter, times(1)).mark();
+        final InOrder inOrder = inOrder(successMeter, counter, errorMeter, context);
         inOrder.verify(counter, times(1)).inc();
         inOrder.verify(context, times(1)).close();
         inOrder.verify(errorMeter, times(1)).mark();
@@ -162,8 +156,7 @@ public class InstrumentorTest {
         assertTrue(healthCheckRegistry.getNames().contains(NAME));
 
 
-        final InOrder inOrder = inOrder(totalMeter, successMeter, counter, errorMeter, context);
-        inOrder.verify(totalMeter, times(1)).mark();
+        final InOrder inOrder = inOrder(successMeter, counter, errorMeter, context);
         inOrder.verify(counter, times(1)).inc();
         inOrder.verify(context, times(1)).close();
         inOrder.verify(errorMeter, times(0)).mark();
@@ -184,8 +177,7 @@ public class InstrumentorTest {
         assertTrue(healthCheckRegistry.getNames().contains(NAME));
 
 
-        final InOrder inOrder = inOrder(totalMeter, successMeter, counter, errorMeter, context);
-        inOrder.verify(totalMeter, times(1)).mark();
+        final InOrder inOrder = inOrder(successMeter, counter, errorMeter, context);
         inOrder.verify(counter, times(1)).inc();
         inOrder.verify(context, times(1)).close();
         inOrder.verify(errorMeter, times(1)).mark();
@@ -206,8 +198,7 @@ public class InstrumentorTest {
         assertTrue(healthCheckRegistry.getNames().contains(NAME));
 
 
-        final InOrder inOrder = inOrder(totalMeter, successMeter, counter, errorMeter, context);
-        inOrder.verify(totalMeter, times(1)).mark();
+        final InOrder inOrder = inOrder(successMeter, counter, errorMeter, context);
         inOrder.verify(counter, times(1)).inc();
         inOrder.verify(context, times(1)).close();
         inOrder.verify(errorMeter, times(0)).mark();
@@ -228,8 +219,7 @@ public class InstrumentorTest {
         assertTrue(healthCheckRegistry.getNames().contains(NAME));
 
 
-        final InOrder inOrder = inOrder(totalMeter, successMeter, counter, errorMeter, context);
-        inOrder.verify(totalMeter, times(1)).mark();
+        final InOrder inOrder = inOrder(successMeter, counter, errorMeter, context);
         inOrder.verify(counter, times(1)).inc();
         inOrder.verify(context, times(1)).close();
         inOrder.verify(errorMeter, times(1)).mark();
@@ -250,8 +240,7 @@ public class InstrumentorTest {
         assertTrue(healthCheckRegistry.getNames().contains(NAME));
 
 
-        final InOrder inOrder = inOrder(totalMeter, successMeter, counter, errorMeter, context);
-        inOrder.verify(totalMeter, times(1)).mark();
+        final InOrder inOrder = inOrder(successMeter, counter, errorMeter, context);
         inOrder.verify(counter, times(1)).inc();
         inOrder.verify(context, times(1)).close();
         inOrder.verify(errorMeter, times(0)).mark();
@@ -261,7 +250,6 @@ public class InstrumentorTest {
 
     private void initializeMetrics() {
         when(metricRegistry.timer(NAME)).thenReturn(timer);
-        when(metricRegistry.meter(NAME + ".totalStarted")).thenReturn(totalMeter);
         when(metricRegistry.meter(NAME + ".success")).thenReturn(successMeter);
         when(metricRegistry.meter(NAME + ".errors")).thenReturn(errorMeter);
         when(metricRegistry.counter(NAME + ".inFlight")).thenReturn(counter);

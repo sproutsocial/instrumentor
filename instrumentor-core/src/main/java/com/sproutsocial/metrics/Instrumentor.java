@@ -26,14 +26,12 @@ public class Instrumentor {
 
 
     private class InstrumentationContext {
-        private Meter totalMeter;
         private Meter successMeter;
         private Meter errorMeter;
         private Timer timer;
         private Counter inFlight;
 
         InstrumentationContext(String name) {
-            totalMeter = metricRegistry.meter(name + ".totalStarted");
             successMeter = metricRegistry.meter(name + ".success");
             errorMeter = metricRegistry.meter(name + ".errors");
             timer = metricRegistry.timer(name);
@@ -108,7 +106,6 @@ public class Instrumentor {
         final InstrumentationContext instrumentationContext = createInstrumentationContext(name, errorThreshold);
 
         return () -> {
-            instrumentationContext.totalMeter.mark();
             instrumentationContext.inFlight.inc();
             T result;
             try (@SuppressWarnings("unused") Timer.Context timerContext = instrumentationContext.timer.time()){
@@ -135,7 +132,6 @@ public class Instrumentor {
         final InstrumentationContext instrumentationContext = createInstrumentationContext(name, errorThreshold);
 
         return () -> {
-            instrumentationContext.totalMeter.mark();
             instrumentationContext.inFlight.inc();
             T result;
             try (@SuppressWarnings("unused") Timer.Context timerContext = instrumentationContext.timer.time()){
@@ -162,7 +158,6 @@ public class Instrumentor {
         final InstrumentationContext instrumentationContext = createInstrumentationContext(name, errorThreshold);
 
         return () -> {
-            instrumentationContext.totalMeter.mark();
             instrumentationContext.inFlight.inc();
             try (@SuppressWarnings("unused") Timer.Context timerContext = instrumentationContext.timer.time()){
                 runnable.run();
@@ -187,7 +182,6 @@ public class Instrumentor {
         final InstrumentationContext instrumentationContext = createInstrumentationContext(name, errorThreshold);
 
         return () -> {
-            instrumentationContext.totalMeter.mark();
             instrumentationContext.inFlight.inc();
             try (@SuppressWarnings("unused") Timer.Context timerContext = instrumentationContext.timer.time()){
                 runnable.run();
@@ -414,8 +408,4 @@ public class Instrumentor {
     ) throws Throwable {
         return callThrowably(callable, name, Optional.of(errorThreshold));
     }
-
-
-
-
 }
