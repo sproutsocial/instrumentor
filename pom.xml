@@ -43,6 +43,16 @@
                 <role>maintainer</role>
             </roles>
         </developer>
+        <developer>
+            <name>Daphne Ng</name>
+            <email>daphne.ng@sproutsocial.com</email>
+            <timezone>America/New_York</timezone>
+            <organization>Sprout Social, LLC</organization>
+            <organizationUrl>http://sproutsocial.com</organizationUrl>
+            <roles>
+                <role>maintainer</role>
+            </roles>
+        </developer>
     </developers>
 
     <licenses>
